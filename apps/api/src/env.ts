@@ -25,6 +25,9 @@ const schema = z.object({
   GOOGLE_CLIENT_ID: optional,
   GOOGLE_CLIENT_SECRET: optional,
 
+  GITHUB_CLIENT_ID: optional,
+  GITHUB_CLIENT_SECRET: optional,
+
   RESEND_API_KEY: optional,
   EMAIL_FROM: z.string().default("Academia <no-reply@example.com>"),
 

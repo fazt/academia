@@ -10,7 +10,7 @@ export default async function LoginPage() {
   const providers = await tryJson(publicApi["auth-providers"].$get());
   return (
     <Suspense>
-      <LoginForm google={providers?.google ?? false} />
+      <LoginForm providers={providers} />
     </Suspense>
   );
 }

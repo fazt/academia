@@ -5,8 +5,11 @@ import { account, session, user, verification } from "../db/schema";
 import { env, isProd } from "../env";
 import { emails, sendEmail } from "./email";
 
-/** Google solo se activa con las dos credenciales; sin ellas la web oculta el botón. */
-export const googleEnabled = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+/** Cada proveedor se activa solo con su ID y su secreto; la web oculta los botones de los demás. */
+export const socialProvidersEnabled = {
+  google: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
+  github: !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
+};
 
 export const auth = betterAuth({
   appName: "Academia",
@@ -36,27 +39,41 @@ export const auth = betterAuth({
       await sendEmail({ to: user.email, ...emails.verifyEmail(user.name, url) });
     },
   },
-  // El callback es <APP_URL>/api/auth/callback/google: pasa por la web, como el resto de /api.
-  socialProviders: googleEnabled
-    ? {
-        google: {
-          clientId: env.GOOGLE_CLIENT_ID!,
-          clientSecret: env.GOOGLE_CLIENT_SECRET!,
-          // Deja elegir cuenta aunque solo haya una sesión de Google abierta en el navegador.
-          prompt: "select_account",
-          // Misma regla que con email y contraseña: sin email confirmado no hay sesión.
-          requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
-        },
-      }
-    : {},
+  // Los callbacks son <APP_URL>/api/auth/callback/<proveedor>: pasan por la web, como el resto de /api.
+  socialProviders: {
+    ...(socialProvidersEnabled.google && {
+      google: {
+        clientId: env.GOOGLE_CLIENT_ID!,
+        clientSecret: env.GOOGLE_CLIENT_SECRET!,
+        // Deja elegir cuenta aunque solo haya una sesión de Google abierta en el navegador.
+        prompt: "select_account",
+        // Misma regla que con email y contraseña: sin email confirmado no hay sesión.
+        requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
+      },
+    }),
+    ...(socialProvidersEnabled.github && {
+      github: {
+        clientId: env.GITHUB_CLIENT_ID!,
+        clientSecret: env.GITHUB_CLIENT_SECRET!,
+        // Misma regla que con email y contraseña: sin email verificado (en GitHub) no hay sesión.
+        requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
+      },
+    }),
+  },
   account: {
+    // No usamos los tokens de los proveedores para nada, pero si se filtra la base no deben servir.
+    encryptOAuthTokens: true,
     accountLinking: {
-      // Entrar con Google en una cuenta existente del mismo email la vincula, pero solo si ese
-      // email ya estaba confirmado. Así nadie puede registrar antes el email de otro con una
-      // contraseña suya y quedarse con la cuenta cuando el dueño entre con Google.
+      // Entrar con un proveedor en una cuenta existente del mismo email la vincula solo si los dos
+      // emails están verificados. Así nadie puede registrar antes el email de otro con una
+      // contraseña suya y quedarse con la cuenta cuando el dueño entre con Google o GitHub.
       requireLocalEmailVerified: true,
+      // Desde el perfil, con sesión iniciada, se puede conectar una cuenta con otro email.
+      allowDifferentEmails: true,
     },
   },
+  // Errores del flujo OAuth sin errorCallbackURL (p. ej. un state caducado): al login, con ?error=.
+  onAPIError: { errorURL: `${env.APP_URL}/login` },
   user: {
     additionalFields: {
       // input: false -> nadie puede asignarse un rol, un titular o una bio desde los endpoints de Better Auth.

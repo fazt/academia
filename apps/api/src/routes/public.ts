@@ -30,7 +30,7 @@ import {
   user,
 } from "../db/schema";
 import { env } from "../env";
-import { googleEnabled } from "../lib/auth";
+import { socialProvidersEnabled } from "../lib/auth";
 import { renderCertificatePdf } from "../lib/certificate-pdf";
 import { notFound } from "../lib/errors";
 import { TAGS, routeDocs } from "../lib/openapi";
@@ -94,11 +94,11 @@ const PDF_DOCS = {
 } as const;
 
 export const publicRoutes = new Hono<AppEnv>()
-  /** Métodos de acceso disponibles: la web solo muestra el botón de Google si está configurado. */
+  /** Métodos de acceso disponibles además de email y contraseña: la web oculta los no configurados. */
   .get(
     "/auth-providers",
-    doc("Métodos de acceso disponibles (si Google está configurado)", { response: authProvidersResponse }),
-    (c) => c.json({ google: googleEnabled }),
+    doc("Proveedores de acceso configurados (Google, GitHub)", { response: authProvidersResponse }),
+    (c) => c.json(socialProvidersEnabled),
   )
 
   /** Cifras públicas para la portada. */

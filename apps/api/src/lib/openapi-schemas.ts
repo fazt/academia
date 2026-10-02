@@ -21,7 +21,9 @@ export const okResponse = z.object({ ok: z.literal(true) }).meta({ ref: "Ok" });
 /* Catálogo público                                                   */
 /* ------------------------------------------------------------------ */
 
-export const authProvidersResponse = z.object({ google: z.boolean() }).meta({ ref: "AuthProviders" });
+export const authProvidersResponse = z
+  .object({ google: z.boolean(), github: z.boolean() })
+  .meta({ ref: "AuthProviders" });
 
 export const publicStatsResponse = z
   .object({ publishedCourses: int, students: int.meta({ description: "Alumnos con alguna matrícula activa" }) })

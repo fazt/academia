@@ -10,20 +10,20 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { AuthCard } from "@/components/auth/auth-card";
-import { GoogleButton } from "@/components/auth/google-button";
+import { type EnabledProviders, SocialSignIn } from "@/components/auth/social-sign-in";
 import { SubmitButton, TextField } from "@/components/form/fields";
 import { Button } from "@/components/ui/button";
-import { FieldGroup, FieldSeparator } from "@/components/ui/field";
+import { FieldGroup } from "@/components/ui/field";
 import { authClient, signIn } from "@/lib/auth-client";
 import { authErrorMessage, oauthErrorMessage, safeRedirect } from "@/lib/auth-errors";
 
 type Values = z.infer<typeof loginSchema>;
 
-export function LoginForm({ google }: { google: boolean }) {
+export function LoginForm({ providers }: { providers: EnabledProviders | null }) {
   const router = useRouter();
   const params = useSearchParams();
   const redirectTo = safeRedirect(params.get("redirect"));
-  // Better Auth vuelve aquí con ?error=<código> si falla el acceso con Google.
+  // Better Auth vuelve aquí con ?error=<código> si falla el acceso con un proveedor.
   const [oauthError, setOauthError] = useState(() => params.get("error"));
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
@@ -74,11 +74,18 @@ export function LoginForm({ google }: { google: boolean }) {
         </span>
       }
     >
-      {oauthError && (
-        <div role="alert" className="mb-4 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">
-          <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+      {oauthError === "email_not_verified" ? (
+        <div role="status" className="mb-4 flex gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
+          <MailWarning className="mt-0.5 size-4 shrink-0 text-amber-600" />
           <p>{oauthErrorMessage(oauthError)}</p>
         </div>
+      ) : (
+        oauthError && (
+          <div role="alert" className="mb-4 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">
+            <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+            <p>{oauthErrorMessage(oauthError)}</p>
+          </div>
+        )
       )}
       {unverifiedEmail && (
         <div className="mb-4 flex gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
@@ -93,12 +100,7 @@ export function LoginForm({ google }: { google: boolean }) {
       )}
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <FieldGroup>
-          {google && (
-            <>
-              <GoogleButton redirectTo={redirectTo} />
-              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">o con tu email</FieldSeparator>
-            </>
-          )}
+          <SocialSignIn enabled={providers} redirectTo={redirectTo} />
           <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
           <div className="space-y-2">
             <TextField

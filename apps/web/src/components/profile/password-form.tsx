@@ -1,8 +1,8 @@
 "use client";
 
-import { changePasswordSchema, setPasswordSchema } from "@academia/shared";
+import { changePasswordSchema } from "@academia/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient } from "@tanstack/react-query";
+import { MailCheck } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -10,66 +10,66 @@ import type { z } from "zod";
 import { SubmitButton, TextField } from "@/components/form/fields";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
-import { api, call, errorMessage } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 type PasswordValues = z.infer<typeof changePasswordSchema>;
-type SetPasswordValues = z.infer<typeof setPasswordSchema>;
 
-/** Las cuentas creadas con Google no tienen contraseña: primero hay que crearla. */
-export function PasswordForm({ hasPassword }: { hasPassword: boolean }) {
-  return hasPassword ? <ChangePasswordForm /> : <SetPasswordForm />;
+/** Quien entró solo con un proveedor (Google, GitHub…) no tiene contraseña: primero hay que crearla. */
+export function PasswordForm({ hasPassword, email }: { hasPassword: boolean; email: string }) {
+  return hasPassword ? <ChangePasswordForm /> : <CreatePasswordCard email={email} />;
 }
 
-function SetPasswordForm() {
-  const queryClient = useQueryClient();
-  const form = useForm<SetPasswordValues>({
-    resolver: zodResolver(setPasswordSchema),
-    defaultValues: { newPassword: "", confirm: "" },
-  });
+/**
+ * Se crea con el mismo enlace por email que "¿Olvidaste tu contraseña?": Better Auth crea la
+ * contraseña si no existe y, de paso, se demuestra que el email es tuyo.
+ */
+function CreatePasswordCard({ email }: { email: string }) {
+  const [pending, setPending] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const onSubmit = async (values: SetPasswordValues) => {
-    try {
-      await call(api.me.password.$post({ json: { newPassword: values.newPassword } }));
-    } catch (error) {
-      toast.error(errorMessage(error));
+  const send = async () => {
+    setPending(true);
+    const { error } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setPending(false);
+    if (error) {
+      toast.error(authErrorMessage(error));
       return;
     }
-    // Al refrescar las cuentas, la tarjeta pasa a "cambiar contraseña".
-    await queryClient.invalidateQueries({ queryKey: ["accounts"] });
-    toast.success("Contraseña creada. Ya puedes entrar también con tu email.");
+    setSent(true);
   };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="font-heading">Contraseña</CardTitle>
-        <CardDescription>Tu cuenta usa Google. Crea una contraseña para entrar también con tu email.</CardDescription>
+        <CardDescription>Tu cuenta no tiene contraseña. Crea una si también quieres entrar con tu email.</CardDescription>
       </CardHeader>
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <CardContent>
-          <FieldGroup>
-            <TextField
-              control={form.control}
-              name="newPassword"
-              label="Contraseña"
-              type="password"
-              autoComplete="new-password"
-              description="Mínimo 8 caracteres."
-            />
-            <TextField
-              control={form.control}
-              name="confirm"
-              label="Repite la contraseña"
-              type="password"
-              autoComplete="new-password"
-            />
-          </FieldGroup>
-        </CardContent>
+      <CardContent>
+        {sent ? (
+          <p className="flex gap-3 text-sm text-muted-foreground">
+            <MailCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <span>
+              Te enviamos un enlace a <strong className="text-foreground">{email}</strong> para crear la contraseña.
+              Caduca en 1 hora y, al usarlo, tendrás que volver a iniciar sesión.
+            </span>
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Te enviaremos un enlace a <strong className="text-foreground">{email}</strong> para elegirla.
+          </p>
+        )}
+      </CardContent>
+      {!sent && (
         <CardFooter className="mt-6 justify-end">
-          <SubmitButton pending={form.formState.isSubmitting}>Crear contraseña</SubmitButton>
+          <SubmitButton type="button" pending={pending} onClick={send}>
+            Enviar enlace
+          </SubmitButton>
         </CardFooter>
-      </form>
+      )}
     </Card>
   );
 }

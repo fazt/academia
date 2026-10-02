@@ -6,11 +6,11 @@ import { RegisterForm } from "./register-form";
 export const metadata: Metadata = { title: "Crear cuenta" };
 
 export default async function RegisterPage() {
-  // Sin respuesta de la API (p. ej. en el build) se muestra solo el registro con email.
+  // Sin respuesta de la API (p. ej. en el build) se muestra solo el acceso con email.
   const providers = await tryJson(publicApi["auth-providers"].$get());
   return (
     <Suspense>
-      <RegisterForm google={providers?.google ?? false} />
+      <RegisterForm providers={providers} />
     </Suspense>
   );
 }

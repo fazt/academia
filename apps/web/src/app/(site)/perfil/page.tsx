@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Suspense } from "react";
 import { Container, PageHeader } from "@/components/layout/page-header";
 import { AvatarUploader } from "@/components/profile/avatar-uploader";
 import { ConnectedAccounts } from "@/components/profile/connected-accounts";
@@ -18,7 +17,7 @@ export default function ProfilePage() {
     queryKey: ["me"],
     queryFn: () => call(api.me.$get()),
   });
-  // Métodos de acceso del usuario: "credential" (contraseña) y "google".
+  // Métodos de acceso del usuario: "credential" (contraseña) y uno por proveedor conectado.
   const accounts = useQuery({
     queryKey: ["accounts"],
     queryFn: async () => {
@@ -32,10 +31,8 @@ export default function ProfilePage() {
     queryFn: () => call(api["auth-providers"].$get()),
     staleTime: Infinity,
   });
-
   // Si las cuentas no cargan se asume contraseña: es el caso de casi todos los usuarios.
   const hasPassword = accounts.data?.some((a) => a.providerId === "credential") ?? true;
-  const hasGoogle = accounts.data?.some((a) => a.providerId === "google") ?? false;
 
   return (
     <Container className="max-w-3xl space-y-8 py-10">
@@ -64,12 +61,8 @@ export default function ProfilePage() {
             email={profile.email}
             initial={{ name: profile.name, headline: profile.headline, bio: profile.bio }}
           />
-          {accounts.data && (providers.data?.google || hasGoogle) && (
-            <Suspense>
-              <ConnectedAccounts accounts={accounts.data} hasPassword={hasPassword} />
-            </Suspense>
-          )}
-          <PasswordForm hasPassword={hasPassword} />
+          {accounts.data && <ConnectedAccounts accounts={accounts.data} enabled={providers.data ?? null} />}
+          <PasswordForm hasPassword={hasPassword} email={profile.email} />
         </div>
       )}
     </Container>

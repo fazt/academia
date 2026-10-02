@@ -10,18 +10,20 @@ const MESSAGES: Record<string, string> = {
   TOKEN_EXPIRED: "El enlace ha caducado",
   INVALID_EMAIL: "Email no válido",
   TOO_MANY_REQUESTS: "Demasiados intentos. Espera un momento y vuelve a probar",
-  FAILED_TO_UNLINK_LAST_ACCOUNT: "Crea una contraseña antes de desconectar Google",
+  FAILED_TO_UNLINK_LAST_ACCOUNT: "No puedes desconectar tu único método de acceso. Crea antes una contraseña",
   SESSION_NOT_FRESH: "Por seguridad, cierra sesión, vuelve a entrar e inténtalo de nuevo",
+  SOCIAL_ACCOUNT_ALREADY_LINKED: "Esa cuenta ya está conectada",
 };
 
-/** Códigos que Better Auth añade como ?error= al volver de Google. */
+/** Códigos que Better Auth añade como ?error= al volver de un proveedor (login y perfil). */
 const OAUTH_MESSAGES: Record<string, string> = {
-  access_denied: "Cancelaste el acceso con Google",
+  access_denied: "Cancelaste el inicio de sesión",
   account_not_linked:
-    "Ya existe una cuenta con este email, pero aún no está confirmada. Confírmala con el enlace que te enviamos (o entra con tu contraseña para pedir otro) y después podrás usar Google.",
-  email_not_verified: "Confirma tu email antes de entrar: te enviamos un enlace",
-  email_does_not_match: "Esa cuenta de Google tiene otro email. Elige la que usa el mismo email que tu perfil",
-  account_already_linked_to_different_user: "Esa cuenta de Google ya está conectada a otro usuario",
+    "Ya hay una cuenta con este email. Entra con tu email y contraseña (si aún no lo confirmaste, usa antes el enlace que te enviamos) y conecta este acceso desde tu perfil.",
+  email_not_verified: "Te enviamos un enlace para confirmar tu email. Ábrelo y después podrás entrar.",
+  email_not_found: "Esa cuenta no tiene un email que podamos usar. Prueba con otra o regístrate con tu email.",
+  unable_to_link_account: "No se pudo conectar la cuenta. Comprueba que su email esté verificado y vuelve a intentarlo.",
+  account_already_linked_to_different_user: "Esa cuenta ya está conectada a otro usuario.",
 };
 
 export function authErrorMessage(error: { code?: string; message?: string; status?: number } | null | undefined) {
@@ -31,7 +33,10 @@ export function authErrorMessage(error: { code?: string; message?: string; statu
 }
 
 export function oauthErrorMessage(code: string) {
-  return OAUTH_MESSAGES[code] ?? "No se pudo completar el acceso con Google. Inténtalo de nuevo";
+  if (code.startsWith("state_") || code === "please_restart_the_process") {
+    return "La solicitud caducó. Vuelve a intentarlo.";
+  }
+  return OAUTH_MESSAGES[code] ?? "No se pudo completar el inicio de sesión. Inténtalo de nuevo.";
 }
 
 /** Solo admite redirecciones internas (evita open redirects con ?redirect=https://...). */

@@ -8,9 +8,12 @@ process.env.REQUIRE_EMAIL_VERIFICATION = "false";
 process.env.APP_URL = "http://localhost:3010";
 process.env.STRIPE_SECRET_KEY = "sk_test_integration_dummy";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_integration_test";
-// Credenciales ficticias: basta para generar la URL de autorización de Google.
+// Credenciales ficticias de los proveedores OAuth: basta para generar las URL de autorización.
+// GitHub se simula además interceptando fetch (test/github-oauth.test.ts).
 process.env.GOOGLE_CLIENT_ID = "test-client-id.apps.googleusercontent.com";
 process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
+process.env.GITHUB_CLIENT_ID = "github-client-test";
+process.env.GITHUB_CLIENT_SECRET = "github-secret-test";
 // Sin Resend los emails solo se imprimen; se silencian para no ensuciar la salida.
 process.env.RESEND_API_KEY = "";
 

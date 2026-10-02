@@ -11,7 +11,7 @@ Plataforma de venta de cursos en video organizados en secciones y capítulos, al
   - Temario con capítulos completados y recursos descargables.
   - Comentarios y preguntas por capítulo (con respuestas del instructor y preguntas resueltas).
   - Reseñas y certificado PDF verificable al completar el curso.
-- **Cuenta**: registro con verificación de email, login, acceso con Google, recuperación de contraseña, perfil (datos, contraseña, avatar y cuentas conectadas), mis cursos, mis compras y mis certificados.
+- **Cuenta**: registro con verificación de email, login (también con Google o GitHub), recuperación de contraseña, perfil (datos, contraseña, avatar y cuentas conectadas), mis cursos, mis compras y mis certificados.
 - **Panel de administración**:
   - Dashboard de ventas.
   - CRUD de cursos con constructor de temario (arrastrar y soltar), subida de videos a Stream (tus, reanudable) y recursos.
@@ -85,21 +85,32 @@ Todos los videos se suben con `requireSignedURLs`. Solo se emite un token a quie
 2. Configura el CORS del bucket para permitir `POST` desde el origen de la web, porque las subidas usan POST prefirmado con límite de tamaño.
 3. Las portadas y los avatares son públicos. Los recursos de los capítulos son privados y se descargan con URLs temporales.
 
-### Google (inicio de sesión)
+### Resend
+
+Rellena `RESEND_API_KEY` y `EMAIL_FROM` con un dominio verificado en Resend.
+
+### Acceso con Google y GitHub
+
+Cada proveedor es opcional: solo aparece su botón "Continuar con …" si están su ID y su secreto en la API. Los callbacks pasan por el origen de la web (`<APP_URL>/api/auth/callback/<proveedor>`), no por el puerto de la API. Funcionamiento común:
+
+- Si no existe una cuenta con ese email, se crea una nueva con rol de alumno.
+- Si ya existe, el proveedor se une a ella solo cuando el email está verificado en las dos partes. Si no, el login explica qué hacer. Así nadie puede registrar el email de otra persona y quedarse con su cuenta cuando el dueño entre con el proveedor.
+- Si `REQUIRE_EMAIL_VERIFICATION=true`, quien no tenga el email verificado en el proveedor no puede entrar hasta confirmarlo con el enlace que enviamos.
+- Desde el perfil se pueden conectar y desconectar proveedores, también con un email distinto. No se puede quitar el último método de acceso.
+- Quien entró solo con un proveedor puede crear una contraseña desde el perfil con un enlace por email.
+- Los tokens de los proveedores se guardan cifrados.
+
+#### Google
 
 1. En Google Cloud Console, abre *APIs y servicios > Credenciales* y crea un ID de cliente de OAuth de tipo *Aplicación web*. Antes tendrás que configurar la pantalla de consentimiento.
 2. Añade los orígenes de JavaScript autorizados: `http://localhost:3010` y tu dominio de producción.
 3. Añade las URI de redirección autorizadas: `http://localhost:3010/api/auth/callback/google` y `https://tu-dominio/api/auth/callback/google`. El callback va al origen de la web (`APP_URL`), no al puerto de la API.
 4. Copia el ID y el secreto a `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`, y reinicia la API.
 
-Sin esas dos variables, el botón "Continuar con Google" no aparece. Cómo se comporta:
+#### GitHub
 
-- Si alguien entra con Google y ya tiene una cuenta con el mismo email, las cuentas se vinculan solo si ese email ya estaba confirmado. Si no lo estaba, se le pide que lo confirme antes, para que nadie pueda registrar el email de otra persona y quedarse con su cuenta.
-- Quien se registra con Google no tiene contraseña. Puede crearla desde el perfil y, después, desconectar Google si quiere.
-
-### Resend
-
-Rellena `RESEND_API_KEY` y `EMAIL_FROM` con un dominio verificado en Resend.
+1. Crea una OAuth App en [github.com/settings/developers](https://github.com/settings/developers). En *Homepage URL* pon el valor de `APP_URL` y en *Authorization callback URL* pon `<APP_URL>/api/auth/callback/github`, por ejemplo `http://localhost:3010/api/auth/callback/github`. Necesitas una app para local y otra para producción, porque GitHub solo admite una URL de callback por app.
+2. Copia el *Client ID* a `GITHUB_CLIENT_ID`, genera un *client secret*, cópialo a `GITHUB_CLIENT_SECRET` y reinicia la API.
 
 ## Scripts
 

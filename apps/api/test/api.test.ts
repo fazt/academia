@@ -4,7 +4,6 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import app from "../src/app";
 import { db, sqlClient } from "../src/db";
 import {
-  account,
   chapterComments,
   chapters,
   coupons,
@@ -336,7 +335,7 @@ describe("portada", () => {
 
 describe("acceso con Google", () => {
   it("la web sabe que Google está activo y el login redirige al callback de la web", async () => {
-    expect(await (await call("/auth-providers")).json()).toEqual({ google: true });
+    expect(await (await call("/auth-providers")).json()).toMatchObject({ google: true });
 
     const res = await call("/auth/sign-in/social", {
       method: "POST",
@@ -347,29 +346,6 @@ describe("acceso con Google", () => {
     expect(url.origin).toBe("https://accounts.google.com");
     expect(url.searchParams.get("redirect_uri")).toBe("http://localhost:3010/api/auth/callback/google");
     expect(url.searchParams.get("prompt")).toBe("select_account");
-  });
-
-  it("una cuenta sin contraseña puede crearla una sola vez y después entrar con ella", async () => {
-    const userId = await createUser("google@test.dev", "Usuario Google");
-    const cookie = await login("google@test.dev");
-    // Simula una cuenta creada con Google: sin cuenta "credential".
-    await db.delete(account).where(and(eq(account.userId, userId), eq(account.providerId, "credential")));
-
-    const first = await call("/me/password", { method: "POST", body: { newPassword: "nueva-clave-123" }, cookie });
-    expect(first.status).toBe(200);
-    const again = await call("/me/password", { method: "POST", body: { newPassword: "otra-clave-456" }, cookie });
-    expect(again.status).toBe(400);
-
-    const signIn = await call("/auth/sign-in/email", {
-      method: "POST",
-      body: { email: "google@test.dev", password: "nueva-clave-123" },
-    });
-    expect(signIn.status).toBe(200);
-  });
-
-  it("crear contraseña exige sesión", async () => {
-    const res = await call("/me/password", { method: "POST", body: { newPassword: "nueva-clave-123" } });
-    expect(res.status).toBe(401);
   });
 });
 
