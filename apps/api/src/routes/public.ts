@@ -97,7 +97,7 @@ export const publicRoutes = new Hono<AppEnv>()
   /** Métodos de acceso disponibles además de email y contraseña: la web oculta los no configurados. */
   .get(
     "/auth-providers",
-    doc("Proveedores de acceso configurados (Google, GitHub)", { response: authProvidersResponse }),
+    doc("Proveedores de acceso configurados (Google, GitHub, Microsoft)", { response: authProvidersResponse }),
     (c) => c.json(socialProvidersEnabled),
   )
 

@@ -15,7 +15,7 @@ import { authErrorMessage } from "@/lib/auth-errors";
 
 type PasswordValues = z.infer<typeof changePasswordSchema>;
 
-/** Quien entró solo con un proveedor (Google, GitHub…) no tiene contraseña: primero hay que crearla. */
+/** Quien entró solo con un proveedor (Google, GitHub, Microsoft) no tiene contraseña: primero hay que crearla. */
 export function PasswordForm({ hasPassword, email }: { hasPassword: boolean; email: string }) {
   return hasPassword ? <ChangePasswordForm /> : <CreatePasswordCard email={email} />;
 }

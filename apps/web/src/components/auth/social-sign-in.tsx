@@ -40,7 +40,18 @@ export function GithubIcon(props: React.ComponentProps<"svg">) {
   );
 }
 
-export type SocialProviderId = "google" | "github";
+export function MicrosoftIcon(props: React.ComponentProps<"svg">) {
+  return (
+    <svg viewBox="0 0 23 23" aria-hidden="true" {...props}>
+      <path fill="#F25022" d="M1 1h10v10H1z" />
+      <path fill="#7FBA00" d="M12 1h10v10H12z" />
+      <path fill="#00A4EF" d="M1 12h10v10H1z" />
+      <path fill="#FFB900" d="M12 12h10v10H12z" />
+    </svg>
+  );
+}
+
+export type SocialProviderId = "google" | "github" | "microsoft";
 
 /** Respuesta de GET /api/auth-providers: qué proveedores están configurados en la API. */
 export type EnabledProviders = Partial<Record<SocialProviderId, boolean>>;
@@ -52,6 +63,7 @@ export const SOCIAL_PROVIDERS: {
 }[] = [
   { id: "google", name: "Google", Icon: GoogleIcon },
   { id: "github", name: "GitHub", Icon: GithubIcon },
+  { id: "microsoft", name: "Microsoft", Icon: MicrosoftIcon },
 ];
 
 /**

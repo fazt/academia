@@ -9,7 +9,18 @@ import { emails, sendEmail } from "./email";
 export const socialProvidersEnabled = {
   google: !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET),
   github: !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
+  microsoft: !!(env.MICROSOFT_CLIENT_ID && env.MICROSOFT_CLIENT_SECRET),
 };
+
+/**
+ * El claim `email` de Entra ID lo puede editar el admin de cualquier tenant (ataque nOAuth), así
+ * que Better Auth lo marca como no verificado. Solo nos fiamos de él si el claim opcional
+ * `xms_edov` confirma que el dominio del email está verificado: cuentas personales con el email
+ * confirmado al crearlas o cuentas de trabajo de un dominio verificado por su organización.
+ */
+function microsoftEmailVerified(profile: Record<string, unknown>) {
+  return profile.xms_edov === true || profile.xms_edov === "true";
+}
 
 export const auth = betterAuth({
   appName: "Academia",
@@ -40,6 +51,8 @@ export const auth = betterAuth({
     },
   },
   // Los callbacks son <APP_URL>/api/auth/callback/<proveedor>: pasan por la web, como el resto de /api.
+  // En los tres, como con email y contraseña, sin email verificado no hay sesión
+  // (requireEmailVerification): se crea la cuenta y se envía el enlace de confirmación.
   socialProviders: {
     ...(socialProvidersEnabled.google && {
       google: {
@@ -47,7 +60,6 @@ export const auth = betterAuth({
         clientSecret: env.GOOGLE_CLIENT_SECRET!,
         // Deja elegir cuenta aunque solo haya una sesión de Google abierta en el navegador.
         prompt: "select_account",
-        // Misma regla que con email y contraseña: sin email confirmado no hay sesión.
         requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
       },
     }),
@@ -55,7 +67,22 @@ export const auth = betterAuth({
       github: {
         clientId: env.GITHUB_CLIENT_ID!,
         clientSecret: env.GITHUB_CLIENT_SECRET!,
-        // Misma regla que con email y contraseña: sin email verificado (en GitHub) no hay sesión.
+        requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
+      },
+    }),
+    ...(socialProvidersEnabled.microsoft && {
+      microsoft: {
+        clientId: env.MICROSOFT_CLIENT_ID!,
+        clientSecret: env.MICROSOFT_CLIENT_SECRET!,
+        tenantId: env.MICROSOFT_TENANT_ID,
+        // Deja elegir cuenta aunque haya una sesión de Microsoft abierta en el navegador.
+        prompt: "select_account",
+        // Solo la identidad: sin User.Read ni offline_access no hay acceso a Graph ni refresh token.
+        disableDefaultScope: true,
+        scope: ["openid", "profile", "email"],
+        // La foto vendría de Graph como data URL; el avatar se sube desde el perfil.
+        disableProfilePhoto: true,
+        mapProfileToUser: (profile) => (microsoftEmailVerified(profile) ? { emailVerified: true } : {}),
         requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
       },
     }),
@@ -66,7 +93,7 @@ export const auth = betterAuth({
     accountLinking: {
       // Entrar con un proveedor en una cuenta existente del mismo email la vincula solo si los dos
       // emails están verificados. Así nadie puede registrar antes el email de otro con una
-      // contraseña suya y quedarse con la cuenta cuando el dueño entre con Google o GitHub.
+      // contraseña suya y quedarse con la cuenta cuando el dueño entre con un proveedor.
       requireLocalEmailVerified: true,
       // Desde el perfil, con sesión iniciada, se puede conectar una cuenta con otro email.
       allowDifferentEmails: true,

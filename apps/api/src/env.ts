@@ -28,6 +28,11 @@ const schema = z.object({
   GITHUB_CLIENT_ID: optional,
   GITHUB_CLIENT_SECRET: optional,
 
+  MICROSOFT_CLIENT_ID: optional,
+  MICROSOFT_CLIENT_SECRET: optional,
+  // "common" admite cuentas personales y de trabajo; también "consumers", "organizations" o el ID de un tenant.
+  MICROSOFT_TENANT_ID: optional.transform((v) => v ?? "common"),
+
   RESEND_API_KEY: optional,
   EMAIL_FROM: z.string().default("Academia <no-reply@example.com>"),
 

@@ -22,7 +22,7 @@ export const okResponse = z.object({ ok: z.literal(true) }).meta({ ref: "Ok" });
 /* ------------------------------------------------------------------ */
 
 export const authProvidersResponse = z
-  .object({ google: z.boolean(), github: z.boolean() })
+  .object({ google: z.boolean(), github: z.boolean(), microsoft: z.boolean() })
   .meta({ ref: "AuthProviders" });
 
 export const publicStatsResponse = z
