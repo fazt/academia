@@ -2,6 +2,7 @@
 
 import { changePasswordSchema } from "@academia/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MailCheck } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -10,10 +11,72 @@ import { SubmitButton, TextField } from "@/components/form/fields";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
 import { authClient } from "@/lib/auth-client";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 type PasswordValues = z.infer<typeof changePasswordSchema>;
 
-export function PasswordForm() {
+/** Las cuentas creadas con Microsoft no tienen contraseña: primero hay que crearla. */
+export function PasswordForm({ hasPassword, email }: { hasPassword: boolean; email: string }) {
+  return hasPassword ? <ChangePasswordForm /> : <CreatePasswordCard email={email} />;
+}
+
+/**
+ * Se crea con el mismo enlace por email que "¿Olvidaste tu contraseña?": así además se
+ * demuestra que el email es tuyo, cosa que Microsoft no siempre garantiza.
+ */
+function CreatePasswordCard({ email }: { email: string }) {
+  const [pending, setPending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const send = async () => {
+    setPending(true);
+    const { error } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setPending(false);
+    if (error) {
+      toast.error(authErrorMessage(error));
+      return;
+    }
+    setSent(true);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-heading">Contraseña</CardTitle>
+        <CardDescription>
+          Entras con Microsoft. Crea una contraseña si también quieres entrar con tu email.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {sent ? (
+          <p className="flex gap-3 text-sm text-muted-foreground">
+            <MailCheck className="mt-0.5 size-4 shrink-0 text-primary" />
+            <span>
+              Te enviamos un enlace a <strong className="text-foreground">{email}</strong> para crear la contraseña.
+              Caduca en 1 hora y, al usarlo, tendrás que volver a iniciar sesión.
+            </span>
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Te enviaremos un enlace a <strong className="text-foreground">{email}</strong> para elegirla.
+          </p>
+        )}
+      </CardContent>
+      {!sent && (
+        <CardFooter className="mt-6 justify-end">
+          <SubmitButton type="button" pending={pending} onClick={send}>
+            Enviar enlace
+          </SubmitButton>
+        </CardFooter>
+      )}
+    </Card>
+  );
+}
+
+function ChangePasswordForm() {
   const [pending, setPending] = useState(false);
   const form = useForm<PasswordValues>({
     resolver: zodResolver(changePasswordSchema),

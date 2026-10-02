@@ -12,10 +12,23 @@ const MESSAGES: Record<string, string> = {
   TOO_MANY_REQUESTS: "Demasiados intentos. Espera un momento y vuelve a probar",
 };
 
+/** Códigos que Better Auth añade como ?error= al volver de Microsoft (u otro proveedor). */
+const OAUTH_MESSAGES: Record<string, string> = {
+  access_denied: "Cancelaste el inicio de sesión",
+  account_not_linked:
+    "Ya hay una cuenta con este email. Entra con tu email y contraseña (si aún no la confirmaste, usa antes el enlace que te enviamos).",
+  email_not_verified: "Te enviamos un enlace para confirmar tu email. Ábrelo y después podrás entrar.",
+  email_not_found: "Tu cuenta no tiene un email asociado. Usa otra o regístrate con tu email.",
+};
+
 export function authErrorMessage(error: { code?: string; message?: string; status?: number } | null | undefined) {
   if (!error) return "Algo salió mal";
   if (error.status === 429) return MESSAGES.TOO_MANY_REQUESTS!;
   return (error.code && MESSAGES[error.code]) || error.message || "Algo salió mal";
+}
+
+export function oauthErrorMessage(code: string) {
+  return OAUTH_MESSAGES[code] ?? "No se pudo completar el inicio de sesión. Inténtalo de nuevo";
 }
 
 /** Solo admite redirecciones internas (evita open redirects con ?redirect=https://...). */

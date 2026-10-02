@@ -8,6 +8,10 @@ process.env.REQUIRE_EMAIL_VERIFICATION = "false";
 process.env.APP_URL = "http://localhost:3010";
 process.env.STRIPE_SECRET_KEY = "sk_test_integration_dummy";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_integration_test";
+// Credenciales ficticias: el intercambio del code con Microsoft se simula en el test.
+process.env.MICROSOFT_CLIENT_ID = "microsoft-client-test";
+process.env.MICROSOFT_CLIENT_SECRET = "microsoft-secret-test";
+process.env.MICROSOFT_TENANT_ID = "common";
 // Sin Resend los emails solo se imprimen; se silencian para no ensuciar la salida.
 process.env.RESEND_API_KEY = "";
 

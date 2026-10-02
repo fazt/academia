@@ -5,6 +5,19 @@ import { account, session, user, verification } from "../db/schema";
 import { env, isProd } from "../env";
 import { emails, sendEmail } from "./email";
 
+/** Microsoft solo se activa con las dos credenciales; sin ellas la web oculta el botón. */
+export const microsoftEnabled = !!(env.MICROSOFT_CLIENT_ID && env.MICROSOFT_CLIENT_SECRET);
+
+/**
+ * El claim `email` de Entra ID lo puede editar el admin de cualquier tenant (ataque nOAuth), así
+ * que Better Auth lo marca como no verificado. Solo nos fiamos de él si el claim opcional
+ * `xms_edov` confirma que el dominio del email está verificado: cuentas personales con el email
+ * confirmado al crearlas o cuentas de trabajo de un dominio verificado por su organización.
+ */
+function microsoftEmailVerified(profile: Record<string, unknown>) {
+  return profile.xms_edov === true || profile.xms_edov === "true";
+}
+
 export const auth = betterAuth({
   appName: "Academia",
   // Origen público: los enlaces de los emails deben apuntar a la web, no al host interno de la API.
@@ -33,6 +46,34 @@ export const auth = betterAuth({
       await sendEmail({ to: user.email, ...emails.verifyEmail(user.name, url) });
     },
   },
+  // El callback es <APP_URL>/api/auth/callback/microsoft: pasa por la web, como el resto de /api.
+  socialProviders: microsoftEnabled
+    ? {
+        microsoft: {
+          clientId: env.MICROSOFT_CLIENT_ID!,
+          clientSecret: env.MICROSOFT_CLIENT_SECRET!,
+          tenantId: env.MICROSOFT_TENANT_ID,
+          // Deja elegir cuenta aunque haya una sesión de Microsoft abierta en el navegador.
+          prompt: "select_account",
+          // Solo la identidad: sin User.Read ni offline_access no hay acceso a Graph ni refresh token.
+          disableDefaultScope: true,
+          scope: ["openid", "profile", "email"],
+          // La foto vendría de Graph como data URL; el avatar se sube desde el perfil.
+          disableProfilePhoto: true,
+          mapProfileToUser: (profile) => (microsoftEmailVerified(profile) ? { emailVerified: true } : {}),
+          // Con un email sin verificar se crea la cuenta pero no hay sesión hasta confirmarlo por
+          // correo, igual que con email y contraseña. Unirse a una cuenta existente con el mismo
+          // email exige además que ambos estén verificados (comportamiento por defecto).
+          requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
+        },
+      }
+    : {},
+  account: {
+    // Los tokens de Microsoft no se usan para nada, pero si se filtra la base no deben servir.
+    encryptOAuthTokens: true,
+  },
+  // Errores del flujo OAuth sin errorCallbackURL (p. ej. un state caducado): al login, con ?error=.
+  onAPIError: { errorURL: `${env.APP_URL}/login` },
   user: {
     additionalFields: {
       // input: false -> nadie puede asignarse un rol, un titular o una bio desde los endpoints de Better Auth.

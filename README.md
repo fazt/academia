@@ -11,7 +11,7 @@ Plataforma de venta de cursos en video organizados en secciones y capítulos, al
   - Temario con capítulos completados y recursos descargables.
   - Comentarios y preguntas por capítulo (con respuestas del instructor y preguntas resueltas).
   - Reseñas y certificado PDF verificable al completar el curso.
-- **Cuenta**: registro con verificación de email, login, recuperación de contraseña, perfil (datos, contraseña y avatar), mis cursos, mis compras y mis certificados.
+- **Cuenta**: registro con verificación de email o con Microsoft, login, recuperación de contraseña, perfil (datos, contraseña y avatar), mis cursos, mis compras y mis certificados.
 - **Panel de administración**:
   - Dashboard de ventas.
   - CRUD de cursos con constructor de temario (arrastrar y soltar), subida de videos a Stream (tus, reanudable) y recursos.
@@ -89,6 +89,24 @@ Todos los videos se suben con `requireSignedURLs`. Solo se emite un token a quie
 
 Rellena `RESEND_API_KEY` y `EMAIL_FROM` con un dominio verificado en Resend.
 
+### Microsoft (Entra ID)
+
+Sin `MICROSOFT_CLIENT_ID` y `MICROSOFT_CLIENT_SECRET` el botón "Continuar con Microsoft" no aparece.
+
+1. En el [Microsoft Entra admin center](https://entra.microsoft.com), ve a *App registrations* > *New registration*.
+   - En *Supported account types* elige *Accounts in any organizational directory and personal Microsoft accounts*. Debe cuadrar con `MICROSOFT_TENANT_ID=common`. Si solo quieres cuentas de tu organización, elige *Single tenant* y pon el ID del tenant.
+   - En *Redirect URI* elige la plataforma *Web* con `http://localhost:3010/api/auth/callback/microsoft`. En producción añade `https://tu-dominio/api/auth/callback/microsoft`.
+2. Copia el *Application (client) ID* a `MICROSOFT_CLIENT_ID`. En *Certificates & secrets* crea un *client secret* y copia su **Value** (no el *Secret ID*) a `MICROSOFT_CLIENT_SECRET`. Caduca: apunta la fecha para renovarlo.
+3. En *Token configuration* > *Add optional claim* > *ID* marca `email`. Después, en *Manifest*, añade a `optionalClaims.idToken`:
+
+   ```json
+   { "name": "xms_edov", "source": null, "essential": false, "additionalProperties": [] }
+   ```
+
+`xms_edov` indica que Microsoft ha verificado el email. Solo en ese caso la cuenta nace verificada y entrar con Microsoft se une a una cuenta existente con el mismo email. Sin él (o si Microsoft no lo garantiza), la cuenta se crea pero hay que confirmar el email con el enlace que enviamos antes de entrar. Así evitamos que el admin de otro tenant ponga tu email en su usuario y entre en tu cuenta (ataque *nOAuth*).
+
+Solo se piden los scopes `openid profile email`: la app no accede a Microsoft Graph ni guarda refresh tokens. Quien entra con Microsoft no tiene contraseña; puede crearla desde su perfil con un enlace por email.
+
 ## Scripts
 
 | Comando | Descripción |
@@ -108,6 +126,7 @@ Rellena `RESEND_API_KEY` y `EMAIL_FROM` con un dominio verificado en Resend.
 - **Los webhooks son idempotentes.** Se registra cada `event.id` y las matrículas se insertan con `ON CONFLICT`. Una sesión completada sin cobrar (pago asíncrono) no matricula hasta `async_payment_succeeded`.
 - **El progreso no se puede falsificar llamando a la API.** Un capítulo solo se completa al llegar al 90 % y si ha pasado al menos la mitad de su duración en tiempo real.
 - **El rol no se puede auto-asignar.** `role`, `headline` y `bio` son campos de Better Auth con `input: false`.
+- **No nos fiamos del email de Microsoft.** La cuenta de Microsoft se identifica por su `oid` y su email solo cuenta como verificado con el claim `xms_edov`.
 - **Las respuestas públicas tienen columnas explícitas.** Nunca exponen uids de Stream, emails ni contenido oculto.
 
 ## Antes de producción

@@ -43,8 +43,12 @@ export function ResetPasswordForm() {
       toast.error(authErrorMessage(error));
       return;
     }
+    // El reset revoca todas las sesiones, pero si se abrió el enlace con la sesión iniciada (al crear
+    // la contraseña desde el perfil) la cookie sigue ahí y el proxy no dejaría entrar al login.
+    await authClient.signOut();
     toast.success("Contraseña actualizada. Ya puedes iniciar sesión.");
     router.push("/login");
+    router.refresh();
   };
 
   return (

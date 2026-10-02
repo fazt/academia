@@ -8,6 +8,7 @@ import { ProfileForm } from "@/components/profile/profile-form";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, call, errorMessage } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { formatDate } from "@/lib/format";
 
 export default function ProfilePage() {
@@ -15,6 +16,17 @@ export default function ProfilePage() {
     queryKey: ["me"],
     queryFn: () => call(api.me.$get()),
   });
+  // Métodos de acceso del usuario: "credential" (contraseña) y "microsoft".
+  const accounts = useQuery({
+    queryKey: ["accounts"],
+    queryFn: async () => {
+      const { data, error } = await authClient.listAccounts();
+      if (error) throw new Error(error.message ?? "No se pudieron cargar tus métodos de acceso");
+      return data;
+    },
+  });
+  // Si las cuentas no cargan se asume contraseña: es el caso de casi todos los usuarios.
+  const hasPassword = accounts.data?.some((a) => a.providerId === "credential") ?? true;
 
   return (
     <Container className="max-w-3xl space-y-8 py-10">
@@ -22,7 +34,7 @@ export default function ProfilePage() {
         title="Perfil"
         description={profile ? `Miembro desde ${formatDate(profile.createdAt)}` : "Gestiona tu cuenta."}
       />
-      {isLoading ? (
+      {isLoading || accounts.isLoading ? (
         <div className="space-y-6">
           <Skeleton className="h-36 w-full rounded-xl" />
           <Skeleton className="h-96 w-full rounded-xl" />
@@ -43,7 +55,7 @@ export default function ProfilePage() {
             email={profile.email}
             initial={{ name: profile.name, headline: profile.headline, bio: profile.bio }}
           />
-          <PasswordForm />
+          <PasswordForm hasPassword={hasPassword} email={profile.email} />
         </div>
       )}
     </Container>
