@@ -29,7 +29,7 @@ import {
   reviews,
   user,
 } from "../db/schema";
-import { env } from "../env";
+import { env, isGithubAuthConfigured } from "../env";
 import { renderCertificatePdf } from "../lib/certificate-pdf";
 import { notFound } from "../lib/errors";
 import { likePattern, offsetOf, paginate } from "../lib/pagination";
@@ -70,6 +70,9 @@ async function loadCertificate(code: string) {
 }
 
 export const publicRoutes = new Hono<AppEnv>()
+  /** Métodos de acceso disponibles además de email y contraseña: la web oculta los no configurados. */
+  .get("/auth-providers", (c) => c.json({ github: isGithubAuthConfigured }))
+
   /** Cifras públicas para la portada. */
   .get("/stats", async (c) => {
     const [[published], [students]] = await Promise.all([

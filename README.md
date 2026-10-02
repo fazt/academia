@@ -11,7 +11,7 @@ Plataforma de venta de cursos en video organizados en secciones y capítulos, al
   - Temario con capítulos completados y recursos descargables.
   - Comentarios y preguntas por capítulo (con respuestas del instructor y preguntas resueltas).
   - Reseñas y certificado PDF verificable al completar el curso.
-- **Cuenta**: registro con verificación de email, login, recuperación de contraseña, perfil (datos, contraseña y avatar), mis cursos, mis compras y mis certificados.
+- **Cuenta**: registro con verificación de email, login (también con GitHub), recuperación de contraseña, perfil (datos, contraseña, avatar y cuentas conectadas), mis cursos, mis compras y mis certificados.
 - **Panel de administración**:
   - Dashboard de ventas.
   - CRUD de cursos con constructor de temario (arrastrar y soltar), subida de videos a Stream (tus, reanudable) y recursos.
@@ -88,6 +88,20 @@ Todos los videos se suben con `requireSignedURLs`. Solo se emite un token a quie
 ### Resend
 
 Rellena `RESEND_API_KEY` y `EMAIL_FROM` con un dominio verificado en Resend.
+
+### GitHub (opcional)
+
+1. Crea una OAuth App en [github.com/settings/developers](https://github.com/settings/developers). En *Homepage URL* pon el valor de `APP_URL` y en *Authorization callback URL* pon `<APP_URL>/api/auth/callback/github`, por ejemplo `http://localhost:3010/api/auth/callback/github`. Necesitas una app para local y otra para producción, porque GitHub solo admite una URL de callback por app.
+2. Copia el *Client ID* a `GITHUB_CLIENT_ID`, genera un *client secret*, cópialo a `GITHUB_CLIENT_SECRET` y reinicia la API.
+
+Sin esas variables no se muestra el botón "Continuar con GitHub". Funcionamiento:
+
+- Si no existe una cuenta con el email de GitHub, se crea una nueva con rol de alumno y el avatar de GitHub.
+- Si ya existe una cuenta con ese email, GitHub se une a ella solo cuando el email está verificado en las dos partes. Si no, el login lo explica.
+- Si `REQUIRE_EMAIL_VERIFICATION=true`, quien no tenga el email verificado en GitHub no puede entrar.
+- Desde el perfil se puede conectar o desconectar GitHub, también con un email distinto.
+- Quien entró solo con GitHub puede crear una contraseña con un enlace por email.
+- Los tokens de GitHub se guardan cifrados.
 
 ## Scripts
 

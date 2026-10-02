@@ -18,6 +18,9 @@ const schema = z.object({
     .default("true")
     .transform((v) => v === "true"),
 
+  GITHUB_CLIENT_ID: optional,
+  GITHUB_CLIENT_SECRET: optional,
+
   RESEND_API_KEY: optional,
   EMAIL_FROM: z.string().default("Academia <no-reply@example.com>"),
 
@@ -50,3 +53,6 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProd = env.NODE_ENV === "production";
+
+/** El login con GitHub solo se activa si están las dos credenciales de la OAuth App. */
+export const isGithubAuthConfigured = !!(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);

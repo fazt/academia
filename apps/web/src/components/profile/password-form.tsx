@@ -7,11 +7,59 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { SubmitButton, TextField } from "@/components/form/fields";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 type PasswordValues = z.infer<typeof changePasswordSchema>;
+
+/**
+ * Para quien entró con GitHub y no tiene contraseña: el enlace de recuperación de Better Auth
+ * crea la contraseña si no existe.
+ */
+export function SetPasswordCard({ email }: { email: string }) {
+  const [pending, setPending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const send = async () => {
+    setPending(true);
+    const { error } = await authClient.requestPasswordReset({
+      email,
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setPending(false);
+    if (error) {
+      toast.error(authErrorMessage(error));
+      return;
+    }
+    setSent(true);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-heading">Contraseña</CardTitle>
+        <CardDescription>Entras con GitHub. Crea una contraseña para poder entrar también con tu email.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground">
+          {sent ? "Te enviamos un enlace a " : "Te enviaremos un enlace a "}
+          <strong className="text-foreground">{email}</strong>
+          {sent ? " para elegirla. Caduca en 1 hora." : " para elegirla."}
+        </p>
+      </CardContent>
+      <CardFooter className="mt-6 justify-end">
+        <Button onClick={send} disabled={pending || sent}>
+          {pending && <Spinner />}
+          {sent ? "Enlace enviado" : "Enviarme el enlace"}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
 
 export function PasswordForm() {
   const [pending, setPending] = useState(false);
