@@ -1,0 +1,19 @@
+{
+  "name": "academia",
+  "private": true,
+  "packageManager": "pnpm@10.5.2",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @academia/api --filter @academia/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @academia/api db:generate",
+    "db:migrate": "pnpm --filter @academia/api db:migrate",
+    "db:seed": "pnpm --filter @academia/api db:seed",
+    "stream:setup": "pnpm --filter @academia/api stream:setup"
+  }
+}

@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: academia-postgres
+    environment:
+      POSTGRES_USER: academia
+      POSTGRES_PASSWORD: academia
+      POSTGRES_DB: academia
+    ports:
+      - "5437:5432"
