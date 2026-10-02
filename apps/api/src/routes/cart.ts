@@ -15,12 +15,14 @@ import { cartItems, courses, enrollments, orderItems, orders } from "../db/schem
 import { env } from "../env";
 import type { AuthUser } from "../lib/auth";
 import { badRequest, conflict } from "../lib/errors";
+import { TAGS, routeDocs } from "../lib/openapi";
+import { cartSummaryResponse, checkoutResponse } from "../lib/openapi-schemas";
 import { stripe } from "../lib/stripe";
 import { validate } from "../lib/validate";
 import { type AppEnv, currentUser, requireAuth } from "../middleware/auth";
 import { courseCardQuery } from "../services/course-queries";
 import { findUsableCoupon, reserveCouponRedemption } from "../services/coupons";
-import { closeUnpaidOrder, enrollFree } from "../services/orders";
+import { closeUnpaidOrder, enrollFree, sendOrderReceipt } from "../services/orders";
 
 /** Minutos que dura una Checkout Session (Stripe exige al menos 30). */
 const CHECKOUT_TTL_MIN = 31;
@@ -99,181 +101,219 @@ function pricingSummary(
   };
 }
 
+const doc = routeDocs(TAGS.cart);
+const CHECKOUT_DOCS = {
+  description:
+    "El precio lo calcula el servidor. Con total 0 matricula directamente; si no, crea la orden y devuelve la URL de Stripe Checkout.",
+  response: checkoutResponse,
+  errors: [400, 409, 503],
+} as const;
+
 export const cartRoutes = new Hono<AppEnv>()
-  .get("/cart", requireAuth, async (c) => {
+  .get("/cart", doc("Ver mi carrito con precios", { response: cartSummaryResponse }), requireAuth, async (c) => {
     const user = currentUser(c);
     return c.json(pricingSummary(await loadCart(user), null, null));
   })
 
-  .post("/cart", requireAuth, validate("json", cartAddSchema), async (c) => {
-    const user = currentUser(c);
-    const { courseId } = c.req.valid("json");
-    const [course] = await purchasableCourses(user, [courseId]);
-    if (!course) throw badRequest("Este curso no está disponible o ya lo tienes");
-    if (course.priceCents === 0) throw badRequest("Los cursos gratis no van al carrito: inscríbete directamente");
-    await db.insert(cartItems).values({ userId: user.id, courseId }).onConflictDoNothing();
-    return c.json(pricingSummary(await loadCart(user), null, null));
-  })
+  .post(
+    "/cart",
+    doc("Añadir un curso al carrito", { response: cartSummaryResponse, errors: [400] }),
+    requireAuth,
+    validate("json", cartAddSchema),
+    async (c) => {
+      const user = currentUser(c);
+      const { courseId } = c.req.valid("json");
+      const [course] = await purchasableCourses(user, [courseId]);
+      if (!course) throw badRequest("Este curso no está disponible o ya lo tienes");
+      if (course.priceCents === 0) throw badRequest("Los cursos gratis no van al carrito: inscríbete directamente");
+      await db.insert(cartItems).values({ userId: user.id, courseId }).onConflictDoNothing();
+      return c.json(pricingSummary(await loadCart(user), null, null));
+    },
+  )
 
-  .delete("/cart/:courseId", requireAuth, async (c) => {
-    const user = currentUser(c);
-    await db
-      .delete(cartItems)
-      .where(and(eq(cartItems.userId, user.id), eq(cartItems.courseId, c.req.param("courseId"))));
-    return c.json(pricingSummary(await loadCart(user), null, null));
-  })
+  .delete(
+    "/cart/:courseId",
+    doc("Quitar un curso del carrito", { response: cartSummaryResponse }),
+    requireAuth,
+    async (c) => {
+      const user = currentUser(c);
+      await db
+        .delete(cartItems)
+        .where(and(eq(cartItems.userId, user.id), eq(cartItems.courseId, c.req.param("courseId"))));
+      return c.json(pricingSummary(await loadCart(user), null, null));
+    },
+  )
 
   /** Fusiona el carrito de invitado (localStorage) al iniciar sesión. */
-  .post("/cart/merge", requireAuth, validate("json", cartMergeSchema), async (c) => {
-    const user = currentUser(c);
-    const items = (await purchasableCourses(user, c.req.valid("json").courseIds)).filter(
-      (i) => i.priceCents > 0,
-    );
-    if (items.length) {
-      await db
-        .insert(cartItems)
-        .values(items.map((i) => ({ userId: user.id, courseId: i.id })))
-        .onConflictDoNothing();
-    }
-    return c.json(pricingSummary(await loadCart(user), null, null));
-  })
+  .post(
+    "/cart/merge",
+    doc("Fusionar el carrito de invitado al iniciar sesión", { response: cartSummaryResponse }),
+    requireAuth,
+    validate("json", cartMergeSchema),
+    async (c) => {
+      const user = currentUser(c);
+      const items = (await purchasableCourses(user, c.req.valid("json").courseIds)).filter(
+        (i) => i.priceCents > 0,
+      );
+      if (items.length) {
+        await db
+          .insert(cartItems)
+          .values(items.map((i) => ({ userId: user.id, courseId: i.id })))
+          .onConflictDoNothing();
+      }
+      return c.json(pricingSummary(await loadCart(user), null, null));
+    },
+  )
 
-  .post("/coupons/validate", requireAuth, validate("json", couponValidateSchema), async (c) => {
-    const user = currentUser(c);
-    const input = c.req.valid("json");
-    const items = input.courseIds ? await purchasableCourses(user, input.courseIds) : await loadCart(user);
-    const coupon = await resolveCoupon(input.code);
-    const summary = pricingSummary(items, coupon!.pricing, coupon!.coupon.code);
-    if (summary.discountCents === 0) throw badRequest("El cupón no aplica a los cursos de tu carrito");
-    return c.json(summary);
-  })
+  .post(
+    "/coupons/validate",
+    doc("Aplicar un cupón al carrito o a unos cursos", { response: cartSummaryResponse, errors: [400] }),
+    requireAuth,
+    validate("json", couponValidateSchema),
+    async (c) => {
+      const user = currentUser(c);
+      const input = c.req.valid("json");
+      const items = input.courseIds ? await purchasableCourses(user, input.courseIds) : await loadCart(user);
+      const coupon = await resolveCoupon(input.code);
+      const summary = pricingSummary(items, coupon!.pricing, coupon!.coupon.code);
+      if (summary.discountCents === 0) throw badRequest("El cupón no aplica a los cursos de tu carrito");
+      return c.json(summary);
+    },
+  )
 
   /**
    * Crea la orden y la Checkout Session. El precio lo calcula siempre el servidor
    * (priceCart) y se envía a Stripe ya rebajado por línea: Stripe no necesita
    * conocer productos ni cupones.
    */
-  .post("/checkout", requireAuth, validate("json", checkoutSchema), async (c) => {
-    const user = currentUser(c);
-    const input = c.req.valid("json");
+  .post(
+    "/checkout",
+    doc("Pagar el carrito o un curso", CHECKOUT_DOCS),
+    requireAuth,
+    validate("json", checkoutSchema),
+    async (c) => {
+      const user = currentUser(c);
+      const input = c.req.valid("json");
 
-    const items = input.courseId
-      ? await purchasableCourses(user, [input.courseId])
-      : await loadCart(user);
-    if (!items.length) throw badRequest("No hay cursos para comprar");
+      const items = input.courseId
+        ? await purchasableCourses(user, [input.courseId])
+        : await loadCart(user);
+      if (!items.length) throw badRequest("No hay cursos para comprar");
 
-    const coupon = await resolveCoupon(input.couponCode);
-    const priced = priceCart(
-      items.map((i) => ({ courseId: i.id, priceCents: i.priceCents })),
-      coupon?.pricing,
-    );
-    if (coupon && !priced.couponApplied) throw badRequest("El cupón no aplica a estos cursos");
-    if (priced.totalCents > 0 && priced.totalCents < MIN_CHARGE_CENTS) {
-      throw badRequest(`El total mínimo para pagar con tarjeta es ${formatPrice(MIN_CHARGE_CENTS, env.CURRENCY)}`);
-    }
-
-    // Cursos gratis sin cupón: matrícula directa, sin orden.
-    if (priced.totalCents === 0 && !coupon) {
-      await enrollFree(user.id, items.map((i) => i.id), null);
-      return c.json({ type: "enrolled" as const, url: null, courseSlugs: items.map((i) => i.slug) });
-    }
-
-    // Falla pronto (503) si Stripe no está configurado, antes de crear la orden o reservar el cupón.
-    if (priced.totalCents > 0) stripe();
-
-    const currency = items[0]!.currency;
-    const now = new Date();
-
-    // Órdenes pendientes anteriores: se cierran para no pagar dos veces el mismo curso.
-    const previous = await db
-      .select({ id: orders.id, sessionId: orders.stripeCheckoutSessionId })
-      .from(orders)
-      .where(and(eq(orders.userId, user.id), eq(orders.status, "pending")));
-    for (const order of previous) {
-      if (order.sessionId) {
-        await stripe()
-          .checkout.sessions.expire(order.sessionId)
-          .catch(() => undefined);
-      }
-      await closeUnpaidOrder(order.id, "expired");
-    }
-
-    const order = await db.transaction(async (tx) => {
-      if (coupon && !(await reserveCouponRedemption(tx, coupon.coupon.id, now))) {
-        throw conflict("El cupón se acaba de agotar");
-      }
-      const [created] = await tx
-        .insert(orders)
-        .values({
-          userId: user.id,
-          status: priced.totalCents === 0 ? "paid" : "pending",
-          currency,
-          subtotalCents: priced.subtotalCents,
-          discountCents: priced.discountCents,
-          totalCents: priced.totalCents,
-          couponId: coupon?.coupon.id ?? null,
-          couponCode: coupon?.coupon.code ?? null,
-          couponReserved: !!coupon,
-          expiresAt: new Date(now.getTime() + CHECKOUT_TTL_MIN * 60_000),
-          paidAt: priced.totalCents === 0 ? now : null,
-          amountPaidCents: priced.totalCents === 0 ? 0 : null,
-        })
-        .returning();
-      await tx.insert(orderItems).values(
-        priced.lines.map((line) => ({
-          orderId: created!.id,
-          courseId: line.courseId,
-          courseTitle: items.find((i) => i.id === line.courseId)!.title,
-          priceCents: line.priceCents,
-          discountCents: line.discountCents,
-        })),
+      const coupon = await resolveCoupon(input.couponCode);
+      const priced = priceCart(
+        items.map((i) => ({ courseId: i.id, priceCents: i.priceCents })),
+        coupon?.pricing,
       );
-      return created!;
-    });
+      if (coupon && !priced.couponApplied) throw badRequest("El cupón no aplica a estos cursos");
+      if (priced.totalCents > 0 && priced.totalCents < MIN_CHARGE_CENTS) {
+        throw badRequest(`El total mínimo para pagar con tarjeta es ${formatPrice(MIN_CHARGE_CENTS, env.CURRENCY)}`);
+      }
 
-    // Total 0 gracias a un cupón: orden pagada sin pasar por Stripe.
-    if (priced.totalCents === 0) {
-      await enrollFree(user.id, items.map((i) => i.id), order.id);
-      return c.json({ type: "enrolled" as const, url: null, courseSlugs: items.map((i) => i.slug) });
-    }
+      // Cursos gratis sin cupón: matrícula directa, sin orden.
+      if (priced.totalCents === 0 && !coupon) {
+        await enrollFree(user.id, items.map((i) => i.id), null);
+        return c.json({ type: "enrolled" as const, url: null, courseSlugs: items.map((i) => i.slug) });
+      }
 
-    try {
-      const session = await stripe().checkout.sessions.create({
-        mode: "payment",
-        customer_email: user.email,
-        client_reference_id: user.id,
-        locale: "es",
-        line_items: priced.lines
-          .filter((line) => line.totalCents > 0)
-          .map((line) => {
-            const course = items.find((i) => i.id === line.courseId)!;
-            return {
-              quantity: 1,
-              price_data: {
-                currency: currency.toLowerCase(),
-                unit_amount: line.totalCents,
-                product_data: {
-                  name: course.title,
-                  ...(line.discountCents > 0 && coupon
-                    ? { description: `Cupón ${coupon.coupon.code}: -${formatPrice(line.discountCents, currency)}` }
-                    : {}),
-                  ...(course.coverImageUrl ? { images: [course.coverImageUrl] } : {}),
-                },
-              },
-            };
-          }),
-        metadata: { orderId: order.id },
-        payment_intent_data: { metadata: { orderId: order.id } },
-        expires_at: Math.floor(order.expiresAt!.getTime() / 1000),
-        success_url: `${env.APP_URL}/checkout/exito?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${env.APP_URL}/carrito?cancelado=1`,
+      // Falla pronto (503) si Stripe no está configurado, antes de crear la orden o reservar el cupón.
+      if (priced.totalCents > 0) stripe();
+
+      const currency = items[0]!.currency;
+      const now = new Date();
+
+      // Órdenes pendientes anteriores: se cierran para no pagar dos veces el mismo curso.
+      const previous = await db
+        .select({ id: orders.id, sessionId: orders.stripeCheckoutSessionId })
+        .from(orders)
+        .where(and(eq(orders.userId, user.id), eq(orders.status, "pending")));
+      for (const order of previous) {
+        if (order.sessionId) {
+          await stripe()
+            .checkout.sessions.expire(order.sessionId)
+            .catch(() => undefined);
+        }
+        await closeUnpaidOrder(order.id, "expired");
+      }
+
+      const order = await db.transaction(async (tx) => {
+        if (coupon && !(await reserveCouponRedemption(tx, coupon.coupon.id, now))) {
+          throw conflict("El cupón se acaba de agotar");
+        }
+        const [created] = await tx
+          .insert(orders)
+          .values({
+            userId: user.id,
+            status: priced.totalCents === 0 ? "paid" : "pending",
+            currency,
+            subtotalCents: priced.subtotalCents,
+            discountCents: priced.discountCents,
+            totalCents: priced.totalCents,
+            couponId: coupon?.coupon.id ?? null,
+            couponCode: coupon?.coupon.code ?? null,
+            couponReserved: !!coupon,
+            expiresAt: new Date(now.getTime() + CHECKOUT_TTL_MIN * 60_000),
+            paidAt: priced.totalCents === 0 ? now : null,
+            amountPaidCents: priced.totalCents === 0 ? 0 : null,
+          })
+          .returning();
+        await tx.insert(orderItems).values(
+          priced.lines.map((line) => ({
+            orderId: created!.id,
+            courseId: line.courseId,
+            courseTitle: items.find((i) => i.id === line.courseId)!.title,
+            priceCents: line.priceCents,
+            discountCents: line.discountCents,
+          })),
+        );
+        return created!;
       });
 
-      await db.update(orders).set({ stripeCheckoutSessionId: session.id }).where(eq(orders.id, order.id));
-      if (!session.url) throw new Error("Stripe no devolvió la URL del checkout");
-      return c.json({ type: "redirect" as const, url: session.url, courseSlugs: [] as string[] });
-    } catch (err) {
-      await closeUnpaidOrder(order.id, "failed");
-      throw err;
-    }
-  });
+      // Total 0 gracias a un cupón: orden pagada sin pasar por Stripe.
+      if (priced.totalCents === 0) {
+        await enrollFree(user.id, items.map((i) => i.id), order.id);
+        await sendOrderReceipt(order.id);
+        return c.json({ type: "enrolled" as const, url: null, courseSlugs: items.map((i) => i.slug) });
+      }
+
+      try {
+        const session = await stripe().checkout.sessions.create({
+          mode: "payment",
+          customer_email: user.email,
+          client_reference_id: user.id,
+          locale: "es",
+          line_items: priced.lines
+            .filter((line) => line.totalCents > 0)
+            .map((line) => {
+              const course = items.find((i) => i.id === line.courseId)!;
+              return {
+                quantity: 1,
+                price_data: {
+                  currency: currency.toLowerCase(),
+                  unit_amount: line.totalCents,
+                  product_data: {
+                    name: course.title,
+                    ...(line.discountCents > 0 && coupon
+                      ? { description: `Cupón ${coupon.coupon.code}: -${formatPrice(line.discountCents, currency)}` }
+                      : {}),
+                    ...(course.coverImageUrl ? { images: [course.coverImageUrl] } : {}),
+                  },
+                },
+              };
+            }),
+          metadata: { orderId: order.id },
+          payment_intent_data: { metadata: { orderId: order.id } },
+          expires_at: Math.floor(order.expiresAt!.getTime() / 1000),
+          success_url: `${env.APP_URL}/checkout/exito?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${env.APP_URL}/carrito?cancelado=1`,
+        });
+
+        await db.update(orders).set({ stripeCheckoutSessionId: session.id }).where(eq(orders.id, order.id));
+        if (!session.url) throw new Error("Stripe no devolvió la URL del checkout");
+        return c.json({ type: "redirect" as const, url: session.url, courseSlugs: [] as string[] });
+      } catch (err) {
+        await closeUnpaidOrder(order.id, "failed");
+        throw err;
+      }
+    },
+  );

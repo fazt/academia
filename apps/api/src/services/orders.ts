@@ -1,7 +1,7 @@
 import type { OrderStatus } from "@academia/shared";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "../db";
-import { cartItems, enrollments, orderItems, orders, user as userTable } from "../db/schema";
+import { cartItems, coupons, enrollments, orderItems, orders, user as userTable } from "../db/schema";
 import { emails, sendEmail } from "../lib/email";
 import { releaseCouponRedemption } from "./coupons";
 import { recalcCourseStudents } from "./course-stats";
@@ -19,6 +19,16 @@ export async function fulfillOrder(
     if (!order || order.status === "paid") return null;
     if (order.status === "refunded" || order.status === "disputed") return null;
 
+    // Pago tardío de una orden ya cerrada (expirada o fallida): su reserva de cupón se liberó
+    // al cerrarla, así que el canje se vuelve a contar para no superar el máximo de usos.
+    const recountCoupon = !!order.couponId && !order.couponReserved;
+    if (recountCoupon) {
+      await tx
+        .update(coupons)
+        .set({ redemptionsCount: sql`${coupons.redemptionsCount} + 1` })
+        .where(eq(coupons.id, order.couponId!));
+    }
+
     await tx
       .update(orders)
       .set({
@@ -26,6 +36,7 @@ export async function fulfillOrder(
         paidAt: new Date(),
         amountPaidCents: payment.amountPaidCents ?? order.totalCents,
         stripePaymentIntentId: payment.paymentIntentId ?? order.stripePaymentIntentId,
+        couponReserved: order.couponId ? true : order.couponReserved,
       })
       .where(eq(orders.id, orderId));
 
@@ -51,22 +62,26 @@ export async function fulfillOrder(
     return { order, items };
   });
 
-  if (!result) return;
+  if (result) await sendOrderReceipt(orderId);
+}
 
-  const buyer = await db.query.user.findFirst({
-    columns: { name: true, email: true },
-    where: eq(userTable.id, result.order.userId),
+/** Envía el recibo de una orden pagada (con Stripe o gratis gracias a un cupón). */
+export async function sendOrderReceipt(orderId: string) {
+  const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) });
+  if (!order) return;
+  const [items, buyer] = await Promise.all([
+    db.select().from(orderItems).where(eq(orderItems.orderId, orderId)),
+    db.query.user.findFirst({ columns: { name: true, email: true }, where: eq(userTable.id, order.userId) }),
+  ]);
+  if (!buyer) return;
+  await sendEmail({
+    to: buyer.email,
+    ...emails.purchaseReceipt(
+      buyer.name,
+      order,
+      items.map((i) => ({ title: i.courseTitle, totalCents: i.priceCents - i.discountCents })),
+    ),
   });
-  if (buyer) {
-    await sendEmail({
-      to: buyer.email,
-      ...emails.purchaseReceipt(
-        buyer.name,
-        result.order,
-        result.items.map((i) => ({ title: i.courseTitle, totalCents: i.priceCents - i.discountCents })),
-      ),
-    });
-  }
 }
 
 /** Orden pendiente que no se pagó: libera la reserva del cupón. */

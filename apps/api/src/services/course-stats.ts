@@ -2,7 +2,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import type { DbOrTx } from "../db";
 import { chapters, courses, enrollments, reviews } from "../db/schema";
 
-/** Duración total y número de capítulos (solo cuentan los que tienen video listo). */
+/** Duración total (solo capítulos con video listo) y número total de capítulos. */
 export async function recalcCourseContent(tx: DbOrTx, courseId: string) {
   // Alias explícitos: dentro de un UPDATE Drizzle no cualifica las columnas de la subconsulta.
   await tx

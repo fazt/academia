@@ -22,6 +22,8 @@ import {
   user,
 } from "../../db/schema";
 import { badRequest, notFound } from "../../lib/errors";
+import { TAGS, routeDocs } from "../../lib/openapi";
+import { okResponse } from "../../lib/openapi-schemas";
 import { likePattern, offsetOf, orderByFrom, paginate } from "../../lib/pagination";
 import { stripe } from "../../lib/stripe";
 import { validate } from "../../lib/validate";
@@ -32,10 +34,13 @@ import { enrollFree, revokeOrder } from "../../services/orders";
 const replies = alias(chapterComments, "replies");
 const replyAuthor = alias(user, "reply_author");
 
+const doc = routeDocs(TAGS.adminPeople);
+const REFUND_NOTE = "Reembolso completo en Stripe; revoca el acceso a los cursos de la orden.";
+
 export const adminPeopleRoutes = new Hono<AppEnv>()
   /* --------------------------------- Usuarios --------------------------------- */
 
-  .get("/users", validate("query", adminUserListQuerySchema), async (c) => {
+  .get("/users", doc("Listar usuarios"), validate("query", adminUserListQuerySchema), async (c) => {
     const query = c.req.valid("query");
     const filters: SQL[] = [];
     if (query.q) {
@@ -75,7 +80,7 @@ export const adminPeopleRoutes = new Hono<AppEnv>()
     return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
   })
 
-  .get("/users/:id", async (c) => {
+  .get("/users/:id", doc("Ver un usuario con sus matrículas y órdenes", { errors: [404] }), async (c) => {
     const profile = await db.query.user.findFirst({
       columns: {
         id: true,
@@ -120,50 +125,64 @@ export const adminPeopleRoutes = new Hono<AppEnv>()
     return c.json({ ...profile, enrollments: enrolled, orders: userOrders });
   })
 
-  .patch("/users/:id/role", validate("json", userRoleInputSchema), async (c) => {
-    const me = currentUser(c);
-    const id = c.req.param("id");
-    const { role } = c.req.valid("json");
-    if (id === me.id && role !== "admin") throw badRequest("No puedes quitarte el rol de administrador");
-    if (role !== "admin") {
-      const [teaching] = await db.select({ value: count() }).from(courses).where(eq(courses.instructorId, id));
-      if (teaching?.value) throw badRequest("Es instructor de algún curso: asigna otro instructor antes");
-    }
-    const [updated] = await db
-      .update(user)
-      .set({ role })
-      .where(eq(user.id, id))
-      .returning({ id: user.id, role: user.role });
-    if (!updated) throw notFound("Usuario no encontrado");
-    return c.json(updated);
-  })
+  .patch(
+    "/users/:id/role",
+    doc("Cambiar el rol de un usuario", { errors: [400, 404] }),
+    validate("json", userRoleInputSchema),
+    async (c) => {
+      const me = currentUser(c);
+      const id = c.req.param("id");
+      const { role } = c.req.valid("json");
+      if (id === me.id && role !== "admin") throw badRequest("No puedes quitarte el rol de administrador");
+      if (role !== "admin") {
+        const [teaching] = await db.select({ value: count() }).from(courses).where(eq(courses.instructorId, id));
+        if (teaching?.value) throw badRequest("Es instructor de algún curso: asigna otro instructor antes");
+      }
+      const [updated] = await db
+        .update(user)
+        .set({ role })
+        .where(eq(user.id, id))
+        .returning({ id: user.id, role: user.role });
+      if (!updated) throw notFound("Usuario no encontrado");
+      return c.json(updated);
+    },
+  )
 
   /** Acceso manual a un curso (becas, regalos, soporte). */
-  .post("/users/:id/enrollments", validate("json", cartAddSchema), async (c) => {
-    const target = await db.query.user.findFirst({ columns: { id: true }, where: eq(user.id, c.req.param("id")) });
-    if (!target) throw notFound("Usuario no encontrado");
-    const { courseId } = c.req.valid("json");
-    const course = await db.query.courses.findFirst({ columns: { id: true }, where: eq(courses.id, courseId) });
-    if (!course) throw notFound("Curso no encontrado");
-    await enrollFree(target.id, [courseId], null);
-    return c.json({ ok: true }, 201);
-  })
+  .post(
+    "/users/:id/enrollments",
+    doc("Dar acceso manual a un curso", { status: 201, response: okResponse, errors: [404] }),
+    validate("json", cartAddSchema),
+    async (c) => {
+      const target = await db.query.user.findFirst({ columns: { id: true }, where: eq(user.id, c.req.param("id")) });
+      if (!target) throw notFound("Usuario no encontrado");
+      const { courseId } = c.req.valid("json");
+      const course = await db.query.courses.findFirst({ columns: { id: true }, where: eq(courses.id, courseId) });
+      if (!course) throw notFound("Curso no encontrado");
+      await enrollFree(target.id, [courseId], null);
+      return c.json({ ok: true }, 201);
+    },
+  )
 
-  .delete("/users/:id/enrollments/:courseId", async (c) => {
-    const courseId = c.req.param("courseId");
-    await db.transaction(async (tx) => {
-      await tx
-        .update(enrollments)
-        .set({ revokedAt: new Date() })
-        .where(and(eq(enrollments.userId, c.req.param("id")), eq(enrollments.courseId, courseId)));
-      await recalcCourseStudents(tx, courseId);
-    });
-    return c.json({ ok: true });
-  })
+  .delete(
+    "/users/:id/enrollments/:courseId",
+    doc("Revocar el acceso a un curso", { response: okResponse }),
+    async (c) => {
+      const courseId = c.req.param("courseId");
+      await db.transaction(async (tx) => {
+        await tx
+          .update(enrollments)
+          .set({ revokedAt: new Date() })
+          .where(and(eq(enrollments.userId, c.req.param("id")), eq(enrollments.courseId, courseId)));
+        await recalcCourseStudents(tx, courseId);
+      });
+      return c.json({ ok: true });
+    },
+  )
 
   /* ---------------------------------- Órdenes ---------------------------------- */
 
-  .get("/orders", validate("query", adminOrderListQuerySchema), async (c) => {
+  .get("/orders", doc("Listar órdenes"), validate("query", adminOrderListQuerySchema), async (c) => {
     const query = c.req.valid("query");
     const filters: SQL[] = [];
     if (query.q) {
@@ -212,7 +231,7 @@ export const adminPeopleRoutes = new Hono<AppEnv>()
     return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
   })
 
-  .get("/orders/:id", async (c) => {
+  .get("/orders/:id", doc("Ver una orden con sus líneas", { errors: [404] }), async (c) => {
     const [order] = await db
       .select({
         id: orders.id,
@@ -248,21 +267,25 @@ export const adminPeopleRoutes = new Hono<AppEnv>()
   })
 
   /** Reembolso completo: Stripe devuelve el dinero y se revoca el acceso. */
-  .post("/orders/:id/refund", async (c) => {
-    const order = await db.query.orders.findFirst({ where: eq(orders.id, c.req.param("id")) });
-    if (!order) throw notFound("Orden no encontrada");
-    if (order.status !== "paid") throw badRequest("Solo se pueden reembolsar órdenes pagadas");
-    if ((order.amountPaidCents ?? order.totalCents) > 0) {
-      if (!order.stripePaymentIntentId) throw badRequest("La orden no tiene un pago de Stripe asociado");
-      await stripe().refunds.create({ payment_intent: order.stripePaymentIntentId, reason: "requested_by_customer" });
-    }
-    await revokeOrder(order.id, "refunded");
-    return c.json({ ok: true });
-  })
+  .post(
+    "/orders/:id/refund",
+    doc("Reembolsar una orden pagada", { description: REFUND_NOTE, response: okResponse, errors: [400, 404, 503] }),
+    async (c) => {
+      const order = await db.query.orders.findFirst({ where: eq(orders.id, c.req.param("id")) });
+      if (!order) throw notFound("Orden no encontrada");
+      if (order.status !== "paid") throw badRequest("Solo se pueden reembolsar órdenes pagadas");
+      if ((order.amountPaidCents ?? order.totalCents) > 0) {
+        if (!order.stripePaymentIntentId) throw badRequest("La orden no tiene un pago de Stripe asociado");
+        await stripe().refunds.create({ payment_intent: order.stripePaymentIntentId, reason: "requested_by_customer" });
+      }
+      await revokeOrder(order.id, "refunded");
+      return c.json({ ok: true });
+    },
+  )
 
   /* ---------------------------------- Reseñas ---------------------------------- */
 
-  .get("/reviews", validate("query", adminReviewListQuerySchema), async (c) => {
+  .get("/reviews", doc("Listar reseñas"), validate("query", adminReviewListQuerySchema), async (c) => {
     const query = c.req.valid("query");
     const filters: SQL[] = [];
     if (query.q) {
@@ -306,86 +329,101 @@ export const adminPeopleRoutes = new Hono<AppEnv>()
     return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
   })
 
-  .patch("/reviews/:id", validate("json", z.object({ hidden: z.boolean() })), async (c) => {
-    const review = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .update(reviews)
-        .set({ hidden: c.req.valid("json").hidden })
-        .where(eq(reviews.id, c.req.param("id")))
-        .returning();
-      if (!row) throw notFound("Reseña no encontrada");
-      await recalcCourseRating(tx, row.courseId);
-      return row;
-    });
-    return c.json(review);
-  })
+  .patch(
+    "/reviews/:id",
+    doc("Ocultar o mostrar una reseña", { errors: [404] }),
+    validate("json", z.object({ hidden: z.boolean() })),
+    async (c) => {
+      const review = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .update(reviews)
+          .set({ hidden: c.req.valid("json").hidden })
+          .where(eq(reviews.id, c.req.param("id")))
+          .returning();
+        if (!row) throw notFound("Reseña no encontrada");
+        await recalcCourseRating(tx, row.courseId);
+        return row;
+      });
+      return c.json(review);
+    },
+  )
 
   /* --------------------------- Comentarios y preguntas --------------------------- */
 
-  .get("/comments", validate("query", adminCommentListQuerySchema), async (c) => {
-    const query = c.req.valid("query");
-    const filters: SQL[] = [isNull(chapterComments.parentId)];
-    if (query.q) {
-      const pattern = likePattern(query.q);
-      filters.push(or(ilike(chapterComments.body, pattern), ilike(user.name, pattern))!);
-    }
-    if (query.courseId) filters.push(eq(chapterComments.courseId, query.courseId));
-    if (query.kind) filters.push(eq(chapterComments.kind, query.kind));
-    if (query.status === "hidden") filters.push(eq(chapterComments.hidden, true));
-    if (query.status === "resolved") filters.push(eq(chapterComments.isResolved, true));
-    if (query.status === "unanswered") {
-      // Preguntas sin resolver y sin ninguna respuesta de un admin.
-      filters.push(
-        eq(chapterComments.kind, "question"),
-        eq(chapterComments.isResolved, false),
-        eq(chapterComments.hidden, false),
-        sql`not ${exists(
-          db
-            .select({ one: sql`1` })
-            .from(replies)
-            .innerJoin(replyAuthor, eq(replyAuthor.id, replies.userId))
-            .where(and(eq(replies.parentId, chapterComments.id), eq(replyAuthor.role, "admin"))),
-        )}`,
-      );
-    }
-    const where = and(...filters);
-    const [items, [total]] = await Promise.all([
-      db
-        .select({
-          id: chapterComments.id,
-          kind: chapterComments.kind,
-          body: chapterComments.body,
-          isResolved: chapterComments.isResolved,
-          hidden: chapterComments.hidden,
-          createdAt: chapterComments.createdAt,
-          repliesCount: sql<number>`(select count(*)::int from ${chapterComments} r where r.parent_id = ${chapterComments.id})`,
-          user: { id: user.id, name: user.name, email: user.email },
-          course: { id: courses.id, title: courses.title, slug: courses.slug },
-          chapter: { id: chapters.id, title: chapters.title },
-        })
-        .from(chapterComments)
-        .innerJoin(user, eq(user.id, chapterComments.userId))
-        .innerJoin(courses, eq(courses.id, chapterComments.courseId))
-        .innerJoin(chapters, eq(chapters.id, chapterComments.chapterId))
-        .where(where)
-        .orderBy(desc(chapterComments.createdAt))
-        .limit(query.pageSize)
-        .offset(offsetOf(query.page, query.pageSize)),
-      db
-        .select({ value: count() })
-        .from(chapterComments)
-        .innerJoin(user, eq(user.id, chapterComments.userId))
-        .where(where),
-    ]);
-    return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
-  })
+  .get(
+    "/comments",
+    doc("Listar comentarios y preguntas"),
+    validate("query", adminCommentListQuerySchema),
+    async (c) => {
+      const query = c.req.valid("query");
+      const filters: SQL[] = [isNull(chapterComments.parentId)];
+      if (query.q) {
+        const pattern = likePattern(query.q);
+        filters.push(or(ilike(chapterComments.body, pattern), ilike(user.name, pattern))!);
+      }
+      if (query.courseId) filters.push(eq(chapterComments.courseId, query.courseId));
+      if (query.kind) filters.push(eq(chapterComments.kind, query.kind));
+      if (query.status === "hidden") filters.push(eq(chapterComments.hidden, true));
+      if (query.status === "resolved") filters.push(eq(chapterComments.isResolved, true));
+      if (query.status === "unanswered") {
+        // Preguntas sin resolver y sin ninguna respuesta de un admin.
+        filters.push(
+          eq(chapterComments.kind, "question"),
+          eq(chapterComments.isResolved, false),
+          eq(chapterComments.hidden, false),
+          sql`not ${exists(
+            db
+              .select({ one: sql`1` })
+              .from(replies)
+              .innerJoin(replyAuthor, eq(replyAuthor.id, replies.userId))
+              .where(and(eq(replies.parentId, chapterComments.id), eq(replyAuthor.role, "admin"))),
+          )}`,
+        );
+      }
+      const where = and(...filters);
+      const [items, [total]] = await Promise.all([
+        db
+          .select({
+            id: chapterComments.id,
+            kind: chapterComments.kind,
+            body: chapterComments.body,
+            isResolved: chapterComments.isResolved,
+            hidden: chapterComments.hidden,
+            createdAt: chapterComments.createdAt,
+            repliesCount: sql<number>`(select count(*)::int from ${chapterComments} r where r.parent_id = ${chapterComments.id})`,
+            user: { id: user.id, name: user.name, email: user.email },
+            course: { id: courses.id, title: courses.title, slug: courses.slug },
+            chapter: { id: chapters.id, title: chapters.title },
+          })
+          .from(chapterComments)
+          .innerJoin(user, eq(user.id, chapterComments.userId))
+          .innerJoin(courses, eq(courses.id, chapterComments.courseId))
+          .innerJoin(chapters, eq(chapters.id, chapterComments.chapterId))
+          .where(where)
+          .orderBy(desc(chapterComments.createdAt))
+          .limit(query.pageSize)
+          .offset(offsetOf(query.page, query.pageSize)),
+        db
+          .select({ value: count() })
+          .from(chapterComments)
+          .innerJoin(user, eq(user.id, chapterComments.userId))
+          .where(where),
+      ]);
+      return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
+    },
+  )
 
-  .patch("/comments/:id", validate("json", z.object({ hidden: z.boolean() })), async (c) => {
-    const [comment] = await db
-      .update(chapterComments)
-      .set({ hidden: c.req.valid("json").hidden })
-      .where(eq(chapterComments.id, c.req.param("id")))
-      .returning();
-    if (!comment) throw notFound("Comentario no encontrado");
-    return c.json(comment);
-  });
+  .patch(
+    "/comments/:id",
+    doc("Ocultar o mostrar un comentario", { errors: [404] }),
+    validate("json", z.object({ hidden: z.boolean() })),
+    async (c) => {
+      const [comment] = await db
+        .update(chapterComments)
+        .set({ hidden: c.req.valid("json").hidden })
+        .where(eq(chapterComments.id, c.req.param("id")))
+        .returning();
+      if (!comment) throw notFound("Comentario no encontrado");
+      return c.json(comment);
+    },
+  );

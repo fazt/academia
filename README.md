@@ -128,3 +128,7 @@ Rellena `RESEND_API_KEY` y `EMAIL_FROM` con un dominio verificado en Resend.
 - Adapta los textos de términos, privacidad y reembolsos a tu negocio y a la legislación que te aplique.
 - Valora Stripe Tax si vendes en la UE.
 - Configura reintentos para los emails, monitorización de errores y backups de la base de datos.
+
+## Documentación
+
+- [Arquitectura](docs/ARCHITECTURE.md): componentes, estructura del monorepo, API, modelo de datos, flujos clave, autenticación, frontend, decisiones de diseño y tests.

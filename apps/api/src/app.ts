@@ -4,10 +4,13 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import { ZodError } from "zod";
+import { apiDocsEnabled } from "./env";
 import { auth } from "./lib/auth";
+import { TAGS, routeDocs } from "./lib/openapi";
 import { type AppEnv, sessionMiddleware } from "./middleware/auth";
 import { adminRoutes } from "./routes/admin";
 import { cartRoutes } from "./routes/cart";
+import { apiDocsRoutes } from "./routes/docs";
 import { learnRoutes } from "./routes/learn";
 import { meRoutes } from "./routes/me";
 import { publicRoutes } from "./routes/public";
@@ -37,13 +40,20 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: "Ruta no encontrada" }, 404));
 
-app.get("/health", (c) => c.json({ ok: true }));
+app.get(
+  "/health",
+  routeDocs(TAGS.system)("Comprobar que la API responde"),
+  (c) => c.json({ ok: true }),
+);
 
 // Better Auth gestiona sus propias rutas.
 app.on(["GET", "POST"], "/auth/*", (c) => auth.handler(c.req.raw));
 
 // Los webhooks necesitan el cuerpo raw y no usan sesión.
 app.route("/webhooks", webhookRoutes);
+
+// Spec OpenAPI (/api/openapi.json) y Swagger UI (/api/docs): fuera de producción o con ENABLE_API_DOCS=true.
+if (apiDocsEnabled) app.route("/", apiDocsRoutes(app));
 
 // Resto de la API: JSON de hasta 1 MB y sesión opcional en c.var.user.
 app.use("*", async (c, next) => {

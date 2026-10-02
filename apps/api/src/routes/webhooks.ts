@@ -5,6 +5,8 @@ import { db } from "../db";
 import { chapters, orders, stripeEvents } from "../db/schema";
 import { env } from "../env";
 import { badRequest } from "../lib/errors";
+import { TAGS, routeDocs } from "../lib/openapi";
+import { webhookAckResponse } from "../lib/openapi-schemas";
 import {
   type StreamVideo,
   enforceVideoSecurity,
@@ -80,52 +82,85 @@ async function handleStripeEvent(event: Stripe.Event) {
   }
 }
 
+const doc = routeDocs(TAGS.webhooks);
+
+/** Cabecera de firma y cuerpo raw de un webhook. */
+const signedEvent = (header: string, body: string) => ({
+  parameters: [{ in: "header" as const, name: header, required: true, schema: { type: "string" as const } }],
+  requestBody: {
+    required: true,
+    content: { "application/json": { schema: { type: "object" as const, description: body } } },
+  },
+});
+
 export const webhookRoutes = new Hono()
-  .post("/stripe", async (c) => {
-    if (!env.STRIPE_WEBHOOK_SECRET) throw badRequest("Webhook de Stripe no configurado");
-    const signature = c.req.header("stripe-signature");
-    if (!signature) throw badRequest("Falta la firma");
-    const rawBody = await c.req.text();
+  .post(
+    "/stripe",
+    doc("Recibir eventos de Stripe", {
+      description:
+        "Pagos completados, fallidos o expirados, reembolsos y disputas. Exige la cabecera `Stripe-Signature` " +
+        "firmada con STRIPE_WEBHOOK_SECRET. Idempotente por id de evento.",
+      response: webhookAckResponse,
+      errors: [400, 503],
+      extra: signedEvent("stripe-signature", "Evento de Stripe (Stripe.Event)"),
+    }),
+    async (c) => {
+      if (!env.STRIPE_WEBHOOK_SECRET) throw badRequest("Webhook de Stripe no configurado");
+      const signature = c.req.header("stripe-signature");
+      if (!signature) throw badRequest("Falta la firma");
+      const rawBody = await c.req.text();
 
-    let event: Stripe.Event;
-    try {
-      event = await stripe().webhooks.constructEventAsync(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
-    } catch {
-      throw badRequest("Firma de Stripe no válida");
-    }
+      let event: Stripe.Event;
+      try {
+        event = await stripe().webhooks.constructEventAsync(rawBody, signature, env.STRIPE_WEBHOOK_SECRET);
+      } catch {
+        throw badRequest("Firma de Stripe no válida");
+      }
 
-    // Idempotencia por event.id. Los manejadores también son idempotentes, así que
-    // un reintento concurrente no duplica matrículas.
-    const seen = await db.query.stripeEvents.findFirst({ where: eq(stripeEvents.id, event.id) });
-    if (seen) return c.json({ received: true, duplicate: true });
+      // Idempotencia por event.id. Los manejadores también son idempotentes, así que
+      // un reintento concurrente no duplica matrículas.
+      const seen = await db.query.stripeEvents.findFirst({ where: eq(stripeEvents.id, event.id) });
+      if (seen) return c.json({ received: true, duplicate: true });
 
-    await handleStripeEvent(event);
-    await db.insert(stripeEvents).values({ id: event.id, type: event.type }).onConflictDoNothing();
-    return c.json({ received: true });
-  })
+      await handleStripeEvent(event);
+      await db.insert(stripeEvents).values({ id: event.id, type: event.type }).onConflictDoNothing();
+      return c.json({ received: true });
+    },
+  )
 
-  .post("/stream", async (c) => {
-    const rawBody = await c.req.text();
-    if (!verifyWebhookSignature(c.req.header("webhook-signature"), rawBody)) {
-      throw badRequest("Firma de Stream no válida");
-    }
-    const video = JSON.parse(rawBody) as StreamVideo;
+  .post(
+    "/stream",
+    doc("Recibir eventos de Cloudflare Stream", {
+      description:
+        "Cambios de estado de los videos. Exige la cabecera `Webhook-Signature` (HMAC con STREAM_WEBHOOK_SECRET). " +
+        "Ignora los videos que no son de esta instalación.",
+      response: webhookAckResponse,
+      errors: [400, 503],
+      extra: signedEvent("webhook-signature", "Objeto de video de Stream"),
+    }),
+    async (c) => {
+      const rawBody = await c.req.text();
+      if (!verifyWebhookSignature(c.req.header("webhook-signature"), rawBody)) {
+        throw badRequest("Firma de Stream no válida");
+      }
+      const video = JSON.parse(rawBody) as StreamVideo;
 
-    const chapter = await db.query.chapters.findFirst({
-      columns: { id: true, courseId: true },
-      where: eq(chapters.streamUid, video.uid),
-    });
-    // El webhook es uno por cuenta: ignora videos que no son de esta instalación.
-    if (!chapter) return c.json({ received: true, ignored: true });
+      const chapter = await db.query.chapters.findFirst({
+        columns: { id: true, courseId: true },
+        where: eq(chapters.streamUid, video.uid),
+      });
+      // El webhook es uno por cuenta: ignora videos que no son de esta instalación.
+      if (!chapter) return c.json({ received: true, ignored: true });
 
-    const status = mapVideoState(video);
-    if (status === "ready" && !video.requireSignedURLs) {
-      await enforceVideoSecurity(video.uid);
-    }
-    await db
-      .update(chapters)
-      .set({ videoStatus: status, durationSec: video.duration > 0 ? Math.round(video.duration) : 0 })
-      .where(eq(chapters.id, chapter.id));
-    await recalcCourseContent(db, chapter.courseId);
-    return c.json({ received: true });
-  });
+      const status = mapVideoState(video);
+      if (status === "ready" && !video.requireSignedURLs) {
+        await enforceVideoSecurity(video.uid);
+      }
+      await db
+        .update(chapters)
+        .set({ videoStatus: status, durationSec: video.duration > 0 ? Math.round(video.duration) : 0 })
+        .where(eq(chapters.id, chapter.id));
+      await recalcCourseContent(db, chapter.courseId);
+      return c.json({ received: true });
+    },
+  );

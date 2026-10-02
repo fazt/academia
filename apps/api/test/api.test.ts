@@ -372,3 +372,84 @@ describe("acceso con Google", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("correcciones de la revisión de arquitectura", () => {
+  const stripe = new Stripe("sk_test_integration_dummy");
+
+  it("un pago tardío de una orden expirada vuelve a contar el canje del cupón", async () => {
+    const [coupon] = await db
+      .insert(coupons)
+      .values({ code: "TARDIO", type: "percent", value: 10, maxRedemptions: 5 })
+      .returning();
+    const [order] = await db
+      .insert(orders)
+      .values({
+        userId: studentId,
+        status: "expired",
+        currency: "USD",
+        subtotalCents: 1999,
+        discountCents: 200,
+        totalCents: 1799,
+        couponId: coupon!.id,
+        couponReserved: false,
+        stripeCheckoutSessionId: "cs_test_late",
+      })
+      .returning();
+    await db.insert(orderItems).values({ orderId: order!.id, courseId, courseTitle: "Curso test", priceCents: 1999, discountCents: 200 });
+
+    const payload = JSON.stringify({
+      id: "evt_late",
+      object: "event",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          object: "checkout.session",
+          id: "cs_test_late",
+          payment_status: "paid",
+          amount_total: 1799,
+          payment_intent: "pi_test_late",
+          metadata: { orderId: order!.id },
+        },
+      },
+    });
+    const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: process.env.STRIPE_WEBHOOK_SECRET! });
+    const res = await app.request("/api/webhooks/stripe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "stripe-signature": signature },
+      body: payload,
+    });
+    expect(res.status).toBe(200);
+
+    const updated = await db.query.coupons.findFirst({ where: eq(coupons.id, coupon!.id) });
+    expect(updated?.redemptionsCount).toBe(1);
+    const paid = await db.query.orders.findFirst({ where: eq(orders.id, order!.id) });
+    expect(paid).toMatchObject({ status: "paid", couponReserved: true });
+  });
+
+  it("un admin sin matrícula puede ver el aula, pero su progreso no se guarda", async () => {
+    const res = await call(`/chapters/${lockedChapterId}/progress`, {
+      method: "PUT",
+      body: { positionSec: 120 },
+      cookie: adminCookie,
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ completed: false, certificateCode: null });
+    const rows = await db.execute(sql`select 1 from chapter_progress where user_id = ${adminId}`);
+    expect(rows.length).toBe(0);
+  });
+
+  it("con la matrícula revocada no se puede editar un comentario propio", async () => {
+    const [comment] = await db
+      .insert(chapterComments)
+      .values({ chapterId: previewChapterId, courseId, userId: studentId, kind: "comment", body: "Original" })
+      .returning();
+    await db.update(enrollments).set({ revokedAt: new Date() }).where(eq(enrollments.userId, studentId));
+    const res = await call(`/comments/${comment!.id}`, {
+      method: "PATCH",
+      body: { body: "Editado" },
+      cookie: studentCookie,
+    });
+    await db.update(enrollments).set({ revokedAt: null }).where(eq(enrollments.userId, studentId));
+    expect(res.status).toBe(403);
+  });
+});

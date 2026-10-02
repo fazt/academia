@@ -36,6 +36,7 @@ export function oauthErrorMessage(code: string) {
 
 /** Solo admite redirecciones internas (evita open redirects con ?redirect=https://...). */
 export function safeRedirect(value: string | null | undefined, fallback = "/mis-cursos") {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return fallback;
+  // "/\evil.com" también vale: los navegadores tratan "\" como "/" y lo convierten en "//evil.com".
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
   return value;
 }

@@ -11,6 +11,11 @@ const schema = z.object({
   APP_URL: z.url().default("http://localhost:3010"),
   DATABASE_URL: z.string().min(1).default("postgres://academia:academia@localhost:5437/academia"),
   CURRENCY: z.string().length(3).default("USD"),
+  // Documentación OpenAPI (/api/docs): siempre fuera de producción; en producción solo con "true".
+  ENABLE_API_DOCS: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
 
   BETTER_AUTH_SECRET: z.string().min(16).default("dev-secret-change-me-dev-secret-change-me"),
   REQUIRE_EMAIL_VERIFICATION: z
@@ -52,3 +57,4 @@ if (!parsed.success) {
 
 export const env = parsed.data;
 export const isProd = env.NODE_ENV === "production";
+export const apiDocsEnabled = !isProd || env.ENABLE_API_DOCS;

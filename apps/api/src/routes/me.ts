@@ -16,6 +16,8 @@ import {
 } from "../db/schema";
 import { auth } from "../lib/auth";
 import { badRequest, forbidden, notFound } from "../lib/errors";
+import { TAGS, routeDocs } from "../lib/openapi";
+import { myCertificatesResponse, okResponse } from "../lib/openapi-schemas";
 import { presignUpload, publicUrl } from "../lib/storage";
 import { validate } from "../lib/validate";
 import { type AppEnv, currentUser, isAdmin, requireAuth } from "../middleware/auth";
@@ -35,66 +37,88 @@ const profileColumns = {
   createdAt: user.createdAt,
 };
 
+const doc = routeDocs(TAGS.me);
+
 export const meRoutes = new Hono<AppEnv>()
   .use(requireAuth)
 
-  .get("/", async (c) => {
+  .get("/", doc("Ver mi perfil", { errors: [404] }), async (c) => {
     const me = currentUser(c);
     const [profile] = await db.select(profileColumns).from(user).where(eq(user.id, me.id));
     if (!profile) throw notFound();
     return c.json(profile);
   })
 
-  .patch("/", validate("json", profileInputSchema), async (c) => {
-    const me = currentUser(c);
-    const [profile] = await db
-      .update(user)
-      .set(c.req.valid("json"))
-      .where(eq(user.id, me.id))
-      .returning(profileColumns);
-    return c.json(profile!);
-  })
+  .patch(
+    "/",
+    doc("Actualizar mi perfil (nombre, titular y bio)"),
+    validate("json", profileInputSchema),
+    async (c) => {
+      const me = currentUser(c);
+      const [profile] = await db
+        .update(user)
+        .set(c.req.valid("json"))
+        .where(eq(user.id, me.id))
+        .returning(profileColumns);
+      return c.json(profile!);
+    },
+  )
 
-  .post("/avatar-upload", validate("json", presignInputSchema), async (c) => {
-    const me = currentUser(c);
-    const input = c.req.valid("json");
-    if (input.kind !== "avatar") throw badRequest("Tipo de subida no permitido");
-    return c.json(await presignUpload(input, me.id));
-  })
+  .post(
+    "/avatar-upload",
+    doc("Prefirmar la subida de mi avatar", { errors: [400, 503] }),
+    validate("json", presignInputSchema),
+    async (c) => {
+      const me = currentUser(c);
+      const input = c.req.valid("json");
+      if (input.kind !== "avatar") throw badRequest("Tipo de subida no permitido");
+      return c.json(await presignUpload(input, me.id));
+    },
+  )
 
-  .put("/avatar", validate("json", avatarInputSchema), async (c) => {
-    const me = currentUser(c);
-    const { image } = c.req.valid("json");
-    // Solo se aceptan avatares subidos a nuestro bucket, en la carpeta del propio usuario.
-    if (image && !image.startsWith(publicUrl(`avatars/${me.id}/`))) {
-      throw badRequest("La imagen debe subirse desde la plataforma");
-    }
-    const [profile] = await db
-      .update(user)
-      .set({ image })
-      .where(eq(user.id, me.id))
-      .returning(profileColumns);
-    return c.json(profile!);
-  })
+  .put(
+    "/avatar",
+    doc("Cambiar o quitar mi avatar", { errors: [400] }),
+    validate("json", avatarInputSchema),
+    async (c) => {
+      const me = currentUser(c);
+      const { image } = c.req.valid("json");
+      // Solo se aceptan avatares subidos a nuestro bucket, en la carpeta del propio usuario.
+      if (image && !image.startsWith(publicUrl(`avatars/${me.id}/`))) {
+        throw badRequest("La imagen debe subirse desde la plataforma");
+      }
+      const [profile] = await db
+        .update(user)
+        .set({ image })
+        .where(eq(user.id, me.id))
+        .returning(profileColumns);
+      return c.json(profile!);
+    },
+  )
 
   /**
    * Primera contraseña de una cuenta creada con Google. Better Auth solo expone setPassword
    * en el servidor; para cambiar una contraseña existente la web usa /api/auth/change-password.
    */
-  .post("/password", validate("json", setPasswordInputSchema), async (c) => {
-    try {
-      await auth.api.setPassword({ body: c.req.valid("json"), headers: c.req.raw.headers });
-    } catch (error) {
-      if (isAPIError(error) && error.body?.code === "PASSWORD_ALREADY_SET") {
-        throw badRequest("Tu cuenta ya tiene contraseña");
+  .post(
+    "/password",
+    doc("Crear mi primera contraseña (cuentas creadas con Google)", { response: okResponse, errors: [400] }),
+    validate("json", setPasswordInputSchema),
+    async (c) => {
+      try {
+        await auth.api.setPassword({ body: c.req.valid("json"), headers: c.req.raw.headers });
+      } catch (error) {
+        if (isAPIError(error) && error.body?.code === "PASSWORD_ALREADY_SET") {
+          throw badRequest("Tu cuenta ya tiene contraseña");
+        }
+        throw error;
       }
-      throw error;
-    }
-    return c.json({ ok: true });
-  })
+      return c.json({ ok: true });
+    },
+  )
 
   /** Ids de cursos inscritos y en el carrito: personaliza las páginas públicas en el cliente. */
-  .get("/library", async (c) => {
+  .get("/library", doc("Ids de mis cursos y de mi carrito"), async (c) => {
     const me = currentUser(c);
     const [owned, cart] = await Promise.all([
       db
@@ -109,7 +133,7 @@ export const meRoutes = new Hono<AppEnv>()
     });
   })
 
-  .get("/courses", async (c) => {
+  .get("/courses", doc("Mis cursos con progreso"), async (c) => {
     const me = currentUser(c);
     const rows = await db
       .select({ courseId: enrollments.courseId, enrolledAt: enrollments.createdAt })
@@ -147,76 +171,80 @@ export const meRoutes = new Hono<AppEnv>()
     return c.json({ items: items.filter((i) => i !== null) });
   })
 
-  .get("/courses/:slug/learn", async (c) => {
-    const me = currentUser(c);
-    const course = await db.query.courses.findFirst({
-      columns: {
-        id: true,
-        slug: true,
-        title: true,
-        subtitle: true,
-        coverImageUrl: true,
-        status: true,
-        instructorId: true,
-      },
-      where: eq(courses.slug, c.req.param("slug")),
-    });
-    if (!course) throw notFound("Curso no encontrado");
-    const enrolled = await hasActiveEnrollment(me.id, course.id);
-    if (!isAdmin(me) && !enrolled) {
-      throw forbidden("Necesitas estar inscrito en este curso");
-    }
+  .get(
+    "/courses/:slug/learn",
+    doc("Datos del aula de un curso: currículo, progreso y reseña", { errors: [403, 404] }),
+    async (c) => {
+      const me = currentUser(c);
+      const course = await db.query.courses.findFirst({
+        columns: {
+          id: true,
+          slug: true,
+          title: true,
+          subtitle: true,
+          coverImageUrl: true,
+          status: true,
+          instructorId: true,
+        },
+        where: eq(courses.slug, c.req.param("slug")),
+      });
+      if (!course) throw notFound("Curso no encontrado");
+      const enrolled = await hasActiveEnrollment(me.id, course.id);
+      if (!isAdmin(me) && !enrolled) {
+        throw forbidden("Necesitas estar inscrito en este curso");
+      }
 
-    const [sections, progressRows, lastChapterId, progress, cert, myReview, instructor] = await Promise.all([
-      loadCurriculum(course.id, { withResources: true }),
-      db
-        .select({
-          chapterId: chapterProgress.chapterId,
-          positionSec: chapterProgress.positionSec,
-          completedAt: chapterProgress.completedAt,
-        })
-        .from(chapterProgress)
-        .where(and(eq(chapterProgress.userId, me.id), eq(chapterProgress.courseId, course.id))),
-      lastWatchedChapterId(me.id, course.id),
-      courseProgress(me.id, course.id),
-      db.query.certificates.findFirst({
-        columns: { code: true },
-        where: and(eq(certificates.userId, me.id), eq(certificates.courseId, course.id)),
-      }),
-      db.query.reviews.findFirst({
-        columns: { rating: true, body: true, updatedAt: true },
-        where: and(eq(reviews.userId, me.id), eq(reviews.courseId, course.id)),
-      }),
-      db.query.user.findFirst({
-        columns: { id: true, name: true, image: true, headline: true },
-        where: eq(user.id, course.instructorId),
-      }),
-    ]);
+      const [sections, progressRows, lastChapterId, progress, cert, myReview, instructor] = await Promise.all([
+        loadCurriculum(course.id, { withResources: true }),
+        db
+          .select({
+            chapterId: chapterProgress.chapterId,
+            positionSec: chapterProgress.positionSec,
+            completedAt: chapterProgress.completedAt,
+          })
+          .from(chapterProgress)
+          .where(and(eq(chapterProgress.userId, me.id), eq(chapterProgress.courseId, course.id))),
+        lastWatchedChapterId(me.id, course.id),
+        courseProgress(me.id, course.id),
+        db.query.certificates.findFirst({
+          columns: { code: true },
+          where: and(eq(certificates.userId, me.id), eq(certificates.courseId, course.id)),
+        }),
+        db.query.reviews.findFirst({
+          columns: { rating: true, body: true, updatedAt: true },
+          where: and(eq(reviews.userId, me.id), eq(reviews.courseId, course.id)),
+        }),
+        db.query.user.findFirst({
+          columns: { id: true, name: true, image: true, headline: true },
+          where: eq(user.id, course.instructorId),
+        }),
+      ]);
 
-    return c.json({
-      course: {
-        id: course.id,
-        slug: course.slug,
-        title: course.title,
-        subtitle: course.subtitle,
-        coverImageUrl: course.coverImageUrl,
-        status: course.status,
-      },
-      instructor: instructor ?? null,
-      sections,
-      progress: Object.fromEntries(
-        progressRows.map((p) => [p.chapterId, { positionSec: p.positionSec, completed: !!p.completedAt }]),
-      ) as Record<string, { positionSec: number; completed: boolean }>,
-      summary: progress,
-      lastChapterId,
-      certificateCode: cert?.code ?? null,
-      myReview: myReview ?? null,
-      isAdmin: isAdmin(me),
-      enrolled,
-    });
-  })
+      return c.json({
+        course: {
+          id: course.id,
+          slug: course.slug,
+          title: course.title,
+          subtitle: course.subtitle,
+          coverImageUrl: course.coverImageUrl,
+          status: course.status,
+        },
+        instructor: instructor ?? null,
+        sections,
+        progress: Object.fromEntries(
+          progressRows.map((p) => [p.chapterId, { positionSec: p.positionSec, completed: !!p.completedAt }]),
+        ) as Record<string, { positionSec: number; completed: boolean }>,
+        summary: progress,
+        lastChapterId,
+        certificateCode: cert?.code ?? null,
+        myReview: myReview ?? null,
+        isAdmin: isAdmin(me),
+        enrolled,
+      });
+    },
+  )
 
-  .get("/orders", async (c) => {
+  .get("/orders", doc("Mis compras"), async (c) => {
     const me = currentUser(c);
     const rows = await db
       .select({
@@ -259,22 +287,26 @@ export const meRoutes = new Hono<AppEnv>()
     });
   })
 
-  .get("/orders/by-session/:sessionId", async (c) => {
-    const me = currentUser(c);
-    const order = await db.query.orders.findFirst({
-      columns: { id: true, status: true, totalCents: true, currency: true },
-      where: and(eq(orders.stripeCheckoutSessionId, c.req.param("sessionId")), eq(orders.userId, me.id)),
-    });
-    if (!order) throw notFound("Pedido no encontrado");
-    const items = await db
-      .select({ courseId: orderItems.courseId, title: orderItems.courseTitle, slug: courses.slug })
-      .from(orderItems)
-      .innerJoin(courses, eq(courses.id, orderItems.courseId))
-      .where(eq(orderItems.orderId, order.id));
-    return c.json({ ...order, items });
-  })
+  .get(
+    "/orders/by-session/:sessionId",
+    doc("Ver una compra por su sesión de Stripe Checkout", { errors: [404] }),
+    async (c) => {
+      const me = currentUser(c);
+      const order = await db.query.orders.findFirst({
+        columns: { id: true, status: true, totalCents: true, currency: true },
+        where: and(eq(orders.stripeCheckoutSessionId, c.req.param("sessionId")), eq(orders.userId, me.id)),
+      });
+      if (!order) throw notFound("Pedido no encontrado");
+      const items = await db
+        .select({ courseId: orderItems.courseId, title: orderItems.courseTitle, slug: courses.slug })
+        .from(orderItems)
+        .innerJoin(courses, eq(courses.id, orderItems.courseId))
+        .where(eq(orderItems.orderId, order.id));
+      return c.json({ ...order, items });
+    },
+  )
 
-  .get("/certificates", async (c) => {
+  .get("/certificates", doc("Mis certificados", { response: myCertificatesResponse }), async (c) => {
     const me = currentUser(c);
     const rows = await db
       .select({

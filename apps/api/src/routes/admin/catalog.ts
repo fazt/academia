@@ -10,6 +10,8 @@ import { Hono } from "hono";
 import { db } from "../../db";
 import { categories, couponCourses, coupons, courses } from "../../db/schema";
 import { badRequest, conflict, notFound } from "../../lib/errors";
+import { TAGS, routeDocs } from "../../lib/openapi";
+import { okResponse } from "../../lib/openapi-schemas";
 import { likePattern, offsetOf, orderByFrom, paginate } from "../../lib/pagination";
 import { presignUpload } from "../../lib/storage";
 import { validate } from "../../lib/validate";
@@ -31,10 +33,12 @@ async function assertCouponCodeFree(code: string, exceptId?: string) {
   if (existing) throw conflict("Ya existe un cupón con ese código");
 }
 
+const doc = routeDocs(TAGS.adminCatalog);
+
 export const adminCatalogRoutes = new Hono<AppEnv>()
   /* -------------------------------- Categorías -------------------------------- */
 
-  .get("/categories", validate("query", pageQuerySchema), async (c) => {
+  .get("/categories", doc("Listar categorías"), validate("query", pageQuerySchema), async (c) => {
     const query = c.req.valid("query");
     const where = query.q
       ? or(ilike(categories.name, likePattern(query.q)), ilike(categories.slug, likePattern(query.q)))
@@ -65,32 +69,42 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
     return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
   })
 
-  .get("/categories/:id", async (c) => {
+  .get("/categories/:id", doc("Ver una categoría", { errors: [404] }), async (c) => {
     const category = await db.query.categories.findFirst({ where: eq(categories.id, c.req.param("id")) });
     if (!category) throw notFound("Categoría no encontrada");
     return c.json(category);
   })
 
-  .post("/categories", validate("json", categoryInputSchema), async (c) => {
-    const input = c.req.valid("json");
-    await assertCategorySlugFree(input.slug);
-    const [category] = await db.insert(categories).values(input).returning();
-    return c.json(category!, 201);
-  })
+  .post(
+    "/categories",
+    doc("Crear una categoría", { status: 201, errors: [409] }),
+    validate("json", categoryInputSchema),
+    async (c) => {
+      const input = c.req.valid("json");
+      await assertCategorySlugFree(input.slug);
+      const [category] = await db.insert(categories).values(input).returning();
+      return c.json(category!, 201);
+    },
+  )
 
-  .put("/categories/:id", validate("json", categoryInputSchema), async (c) => {
-    const input = c.req.valid("json");
-    await assertCategorySlugFree(input.slug, c.req.param("id"));
-    const [category] = await db
-      .update(categories)
-      .set(input)
-      .where(eq(categories.id, c.req.param("id")))
-      .returning();
-    if (!category) throw notFound("Categoría no encontrada");
-    return c.json(category);
-  })
+  .put(
+    "/categories/:id",
+    doc("Actualizar una categoría", { errors: [404, 409] }),
+    validate("json", categoryInputSchema),
+    async (c) => {
+      const input = c.req.valid("json");
+      await assertCategorySlugFree(input.slug, c.req.param("id"));
+      const [category] = await db
+        .update(categories)
+        .set(input)
+        .where(eq(categories.id, c.req.param("id")))
+        .returning();
+      if (!category) throw notFound("Categoría no encontrada");
+      return c.json(category);
+    },
+  )
 
-  .delete("/categories/:id", async (c) => {
+  .delete("/categories/:id", doc("Borrar una categoría", { response: okResponse, errors: [404] }), async (c) => {
     const [deleted] = await db.delete(categories).where(eq(categories.id, c.req.param("id"))).returning();
     if (!deleted) throw notFound("Categoría no encontrada");
     return c.json({ ok: true });
@@ -98,7 +112,7 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
 
   /* ---------------------------------- Cupones ---------------------------------- */
 
-  .get("/coupons", validate("query", adminCouponListQuerySchema), async (c) => {
+  .get("/coupons", doc("Listar cupones"), validate("query", adminCouponListQuerySchema), async (c) => {
     const query = c.req.valid("query");
     const filters: SQL[] = [];
     if (query.q) filters.push(ilike(coupons.code, likePattern(query.q)));
@@ -142,7 +156,7 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
     return c.json(paginate(items, total?.value ?? 0, query.page, query.pageSize));
   })
 
-  .get("/coupons/:id", async (c) => {
+  .get("/coupons/:id", doc("Ver un cupón con sus cursos", { errors: [404] }), async (c) => {
     const coupon = await db.query.coupons.findFirst({ where: eq(coupons.id, c.req.param("id")) });
     if (!coupon) throw notFound("Cupón no encontrado");
     const linked = await db
@@ -152,63 +166,73 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
     return c.json({ ...coupon, courseIds: linked.map((l) => l.courseId) });
   })
 
-  .post("/coupons", validate("json", couponInputSchema), async (c) => {
-    const input = c.req.valid("json");
-    await assertCouponCodeFree(input.code);
-    const coupon = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .insert(coupons)
-        .values({
-          code: input.code,
-          type: input.type,
-          value: input.value,
-          appliesToAll: input.appliesToAll,
-          maxRedemptions: input.maxRedemptions,
-          expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
-          active: input.active,
-        })
-        .returning();
-      if (!input.appliesToAll) {
-        await tx.insert(couponCourses).values(input.courseIds.map((courseId) => ({ couponId: row!.id, courseId })));
-      }
-      return row!;
-    });
-    return c.json(coupon, 201);
-  })
+  .post(
+    "/coupons",
+    doc("Crear un cupón", { status: 201, errors: [409] }),
+    validate("json", couponInputSchema),
+    async (c) => {
+      const input = c.req.valid("json");
+      await assertCouponCodeFree(input.code);
+      const coupon = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .insert(coupons)
+          .values({
+            code: input.code,
+            type: input.type,
+            value: input.value,
+            appliesToAll: input.appliesToAll,
+            maxRedemptions: input.maxRedemptions,
+            expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+            active: input.active,
+          })
+          .returning();
+        if (!input.appliesToAll) {
+          await tx.insert(couponCourses).values(input.courseIds.map((courseId) => ({ couponId: row!.id, courseId })));
+        }
+        return row!;
+      });
+      return c.json(coupon, 201);
+    },
+  )
 
-  .put("/coupons/:id", validate("json", couponInputSchema), async (c) => {
-    const id = c.req.param("id");
-    const input = c.req.valid("json");
-    await assertCouponCodeFree(input.code, id);
-    const existing = await db.query.coupons.findFirst({ where: eq(coupons.id, id) });
-    if (!existing) throw notFound("Cupón no encontrado");
-    if (input.maxRedemptions !== null && input.maxRedemptions < existing.redemptionsCount) {
-      throw badRequest(`Ya se usó ${existing.redemptionsCount} veces: el máximo no puede ser menor`);
-    }
-    const coupon = await db.transaction(async (tx) => {
-      const [row] = await tx
-        .update(coupons)
-        .set({
-          code: input.code,
-          type: input.type,
-          value: input.value,
-          appliesToAll: input.appliesToAll,
-          maxRedemptions: input.maxRedemptions,
-          expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
-          active: input.active,
-        })
-        .where(eq(coupons.id, id))
-        .returning();
-      await tx.delete(couponCourses).where(eq(couponCourses.couponId, id));
-      if (!input.appliesToAll) {
-        await tx.insert(couponCourses).values(input.courseIds.map((courseId) => ({ couponId: id, courseId })));
+  .put(
+    "/coupons/:id",
+    doc("Actualizar un cupón", { errors: [400, 404, 409] }),
+    validate("json", couponInputSchema),
+    async (c) => {
+      const id = c.req.param("id");
+      const input = c.req.valid("json");
+      await assertCouponCodeFree(input.code, id);
+      const existing = await db.query.coupons.findFirst({ where: eq(coupons.id, id) });
+      if (!existing) throw notFound("Cupón no encontrado");
+      if (input.maxRedemptions !== null && input.maxRedemptions < existing.redemptionsCount) {
+        throw badRequest(`Ya se usó ${existing.redemptionsCount} veces: el máximo no puede ser menor`);
       }
-      return row!;
-    });
-    return c.json(coupon);
-  })
+      const coupon = await db.transaction(async (tx) => {
+        const [row] = await tx
+          .update(coupons)
+          .set({
+            code: input.code,
+            type: input.type,
+            value: input.value,
+            appliesToAll: input.appliesToAll,
+            maxRedemptions: input.maxRedemptions,
+            expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+            active: input.active,
+          })
+          .where(eq(coupons.id, id))
+          .returning();
+        await tx.delete(couponCourses).where(eq(couponCourses.couponId, id));
+        if (!input.appliesToAll) {
+          await tx.insert(couponCourses).values(input.courseIds.map((courseId) => ({ couponId: id, courseId })));
+        }
+        return row!;
+      });
+      return c.json(coupon);
+    },
+  )
 
-  .delete("/coupons/:id", async (c) => {
+  .delete("/coupons/:id", doc("Borrar un cupón", { response: okResponse, errors: [404] }), async (c) => {
     const [deleted] = await db.delete(coupons).where(eq(coupons.id, c.req.param("id"))).returning();
     if (!deleted) throw notFound("Cupón no encontrado");
     return c.json({ ok: true });
@@ -216,9 +240,14 @@ export const adminCatalogRoutes = new Hono<AppEnv>()
 
   /* --------------------------------- Subidas --------------------------------- */
 
-  .post("/uploads/presign", validate("json", presignInputSchema), async (c) => {
-    const me = currentUser(c);
-    const input = c.req.valid("json");
-    if (input.kind === "avatar") throw badRequest("Usa /me/avatar-upload para avatares");
-    return c.json(await presignUpload(input, me.id));
-  });
+  .post(
+    "/uploads/presign",
+    doc("Prefirmar la subida de una portada o un recurso", { errors: [400, 503] }),
+    validate("json", presignInputSchema),
+    async (c) => {
+      const me = currentUser(c);
+      const input = c.req.valid("json");
+      if (input.kind === "avatar") throw badRequest("Usa /me/avatar-upload para avatares");
+      return c.json(await presignUpload(input, me.id));
+    },
+  );
