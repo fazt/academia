@@ -1,4 +1,5 @@
-import { avatarInputSchema, presignInputSchema, profileInputSchema } from "@academia/shared";
+import { avatarInputSchema, presignInputSchema, profileInputSchema, setPasswordInputSchema } from "@academia/shared";
+import { isAPIError } from "better-auth/api";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db";
@@ -13,6 +14,7 @@ import {
   reviews,
   user,
 } from "../db/schema";
+import { auth } from "../lib/auth";
 import { badRequest, forbidden, notFound } from "../lib/errors";
 import { presignUpload, publicUrl } from "../lib/storage";
 import { validate } from "../lib/validate";
@@ -73,6 +75,22 @@ export const meRoutes = new Hono<AppEnv>()
       .where(eq(user.id, me.id))
       .returning(profileColumns);
     return c.json(profile!);
+  })
+
+  /**
+   * Primera contraseña de una cuenta creada con Google. Better Auth solo expone setPassword
+   * en el servidor; para cambiar una contraseña existente la web usa /api/auth/change-password.
+   */
+  .post("/password", validate("json", setPasswordInputSchema), async (c) => {
+    try {
+      await auth.api.setPassword({ body: c.req.valid("json"), headers: c.req.raw.headers });
+    } catch (error) {
+      if (isAPIError(error) && error.body?.code === "PASSWORD_ALREADY_SET") {
+        throw badRequest("Tu cuenta ya tiene contraseña");
+      }
+      throw error;
+    }
+    return c.json({ ok: true });
   })
 
   /** Ids de cursos inscritos y en el carrito: personaliza las páginas públicas en el cliente. */

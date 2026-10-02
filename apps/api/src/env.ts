@@ -17,6 +17,8 @@ const schema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((v) => v === "true"),
+  GOOGLE_CLIENT_ID: optional,
+  GOOGLE_CLIENT_SECRET: optional,
 
   RESEND_API_KEY: optional,
   EMAIL_FROM: z.string().default("Academia <no-reply@example.com>"),

@@ -8,14 +8,15 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { AuthCard } from "@/components/auth/auth-card";
+import { GoogleButton } from "@/components/auth/google-button";
 import { SubmitButton, TextField } from "@/components/form/fields";
-import { FieldGroup } from "@/components/ui/field";
+import { FieldGroup, FieldSeparator } from "@/components/ui/field";
 import { signUp } from "@/lib/auth-client";
 import { authErrorMessage, safeRedirect } from "@/lib/auth-errors";
 
 type Values = z.infer<typeof registerSchema>;
 
-export function RegisterForm() {
+export function RegisterForm({ google }: { google: boolean }) {
   const router = useRouter();
   const params = useSearchParams();
   const redirectTo = safeRedirect(params.get("redirect"));
@@ -55,6 +56,12 @@ export function RegisterForm() {
     >
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <FieldGroup>
+          {google && (
+            <>
+              <GoogleButton redirectTo={redirectTo} />
+              <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">o con tu email</FieldSeparator>
+            </>
+          )}
           <TextField control={form.control} name="name" label="Nombre" autoComplete="name" />
           <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
           <TextField

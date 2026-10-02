@@ -313,3 +313,15 @@ export const changePasswordSchema = z
     message: "Las contraseñas no coinciden",
     path: ["confirm"],
   });
+
+/** Cuerpo de POST /api/me/password: primera contraseña de una cuenta creada con Google. */
+export const setPasswordInputSchema = z.object({
+  newPassword: passwordSchema,
+});
+
+export const setPasswordSchema = setPasswordInputSchema
+  .extend({ confirm: z.string() })
+  .refine((v) => v.newPassword === v.confirm, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirm"],
+  });

@@ -8,6 +8,9 @@ process.env.REQUIRE_EMAIL_VERIFICATION = "false";
 process.env.APP_URL = "http://localhost:3010";
 process.env.STRIPE_SECRET_KEY = "sk_test_integration_dummy";
 process.env.STRIPE_WEBHOOK_SECRET = "whsec_integration_test";
+// Credenciales ficticias: basta para generar la URL de autorización de Google.
+process.env.GOOGLE_CLIENT_ID = "test-client-id.apps.googleusercontent.com";
+process.env.GOOGLE_CLIENT_SECRET = "test-client-secret";
 // Sin Resend los emails solo se imprimen; se silencian para no ensuciar la salida.
 process.env.RESEND_API_KEY = "";
 

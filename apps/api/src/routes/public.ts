@@ -30,6 +30,7 @@ import {
   user,
 } from "../db/schema";
 import { env } from "../env";
+import { googleEnabled } from "../lib/auth";
 import { renderCertificatePdf } from "../lib/certificate-pdf";
 import { notFound } from "../lib/errors";
 import { likePattern, offsetOf, paginate } from "../lib/pagination";
@@ -70,6 +71,9 @@ async function loadCertificate(code: string) {
 }
 
 export const publicRoutes = new Hono<AppEnv>()
+  /** Métodos de acceso disponibles: la web solo muestra el botón de Google si está configurado. */
+  .get("/auth-providers", (c) => c.json({ google: googleEnabled }))
+
   /** Cifras públicas para la portada. */
   .get("/stats", async (c) => {
     const [[published], [students]] = await Promise.all([

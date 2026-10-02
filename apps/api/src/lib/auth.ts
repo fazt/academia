@@ -5,6 +5,9 @@ import { account, session, user, verification } from "../db/schema";
 import { env, isProd } from "../env";
 import { emails, sendEmail } from "./email";
 
+/** Google solo se activa con las dos credenciales; sin ellas la web oculta el botón. */
+export const googleEnabled = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+
 export const auth = betterAuth({
   appName: "Academia",
   // Origen público: los enlaces de los emails deben apuntar a la web, no al host interno de la API.
@@ -31,6 +34,27 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
     sendVerificationEmail: async ({ user, url }) => {
       await sendEmail({ to: user.email, ...emails.verifyEmail(user.name, url) });
+    },
+  },
+  // El callback es <APP_URL>/api/auth/callback/google: pasa por la web, como el resto de /api.
+  socialProviders: googleEnabled
+    ? {
+        google: {
+          clientId: env.GOOGLE_CLIENT_ID!,
+          clientSecret: env.GOOGLE_CLIENT_SECRET!,
+          // Deja elegir cuenta aunque solo haya una sesión de Google abierta en el navegador.
+          prompt: "select_account",
+          // Misma regla que con email y contraseña: sin email confirmado no hay sesión.
+          requireEmailVerification: env.REQUIRE_EMAIL_VERIFICATION,
+        },
+      }
+    : {},
+  account: {
+    accountLinking: {
+      // Entrar con Google en una cuenta existente del mismo email la vincula, pero solo si ese
+      // email ya estaba confirmado. Así nadie puede registrar antes el email de otro con una
+      // contraseña suya y quedarse con la cuenta cuando el dueño entre con Google.
+      requireLocalEmailVerified: true,
     },
   },
   user: {

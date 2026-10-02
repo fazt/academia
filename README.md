@@ -11,7 +11,7 @@ Plataforma de venta de cursos en video organizados en secciones y capítulos, al
   - Temario con capítulos completados y recursos descargables.
   - Comentarios y preguntas por capítulo (con respuestas del instructor y preguntas resueltas).
   - Reseñas y certificado PDF verificable al completar el curso.
-- **Cuenta**: registro con verificación de email, login, recuperación de contraseña, perfil (datos, contraseña y avatar), mis cursos, mis compras y mis certificados.
+- **Cuenta**: registro con verificación de email, login, acceso con Google, recuperación de contraseña, perfil (datos, contraseña, avatar y cuentas conectadas), mis cursos, mis compras y mis certificados.
 - **Panel de administración**:
   - Dashboard de ventas.
   - CRUD de cursos con constructor de temario (arrastrar y soltar), subida de videos a Stream (tus, reanudable) y recursos.
@@ -84,6 +84,18 @@ Todos los videos se suben con `requireSignedURLs`. Solo se emite un token a quie
 1. Crea un bucket y una clave de acceso, y rellena las variables `SPACES_*`. `SPACES_PUBLIC_URL` es la URL pública (o la del CDN) del bucket.
 2. Configura el CORS del bucket para permitir `POST` desde el origen de la web, porque las subidas usan POST prefirmado con límite de tamaño.
 3. Las portadas y los avatares son públicos. Los recursos de los capítulos son privados y se descargan con URLs temporales.
+
+### Google (inicio de sesión)
+
+1. En Google Cloud Console, abre *APIs y servicios > Credenciales* y crea un ID de cliente de OAuth de tipo *Aplicación web*. Antes tendrás que configurar la pantalla de consentimiento.
+2. Añade los orígenes de JavaScript autorizados: `http://localhost:3010` y tu dominio de producción.
+3. Añade las URI de redirección autorizadas: `http://localhost:3010/api/auth/callback/google` y `https://tu-dominio/api/auth/callback/google`. El callback va al origen de la web (`APP_URL`), no al puerto de la API.
+4. Copia el ID y el secreto a `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`, y reinicia la API.
+
+Sin esas dos variables, el botón "Continuar con Google" no aparece. Cómo se comporta:
+
+- Si alguien entra con Google y ya tiene una cuenta con el mismo email, las cuentas se vinculan solo si ese email ya estaba confirmado. Si no lo estaba, se le pide que lo confirme antes, para que nadie pueda registrar el email de otra persona y quedarse con su cuenta.
+- Quien se registra con Google no tiene contraseña. Puede crearla desde el perfil y, después, desconectar Google si quiere.
 
 ### Resend
 
