@@ -1,6 +1,7 @@
 {
   "name": "academia",
   "private": true,
+  "license": "MIT",
   "packageManager": "pnpm@10.5.2",
   "engines": {
     "node": ">=22"

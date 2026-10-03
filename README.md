@@ -183,3 +183,7 @@ Solo se piden los scopes `openid profile email`: la app no accede a Microsoft Gr
 
 - [Arquitectura](docs/ARCHITECTURE.md): componentes, estructura del monorepo, API, modelo de datos, flujos clave, autenticación, frontend, decisiones de diseño y tests.
 - **API**: con el proyecto en marcha, Swagger UI está en [localhost:3010/api/docs](http://localhost:3010/api/docs) y la especificación en `/api/openapi.json`. Fuera de producción se activan solos; en producción solo con `ENABLE_API_DOCS=true`. Cada ruta nueva necesita su `doc("…")`, o falla el test `apps/api/src/routes/docs.test.ts`.
+
+## Licencia
+
+[MIT](LICENSE) © 2026 Fazt.
