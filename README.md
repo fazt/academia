@@ -2,8 +2,13 @@
 
 Plataforma de venta de cursos en video organizados en secciones y capítulos, al estilo Udemy. Es una academia propia: los administradores crean y venden los cursos y los alumnos los compran y los siguen desde el aula.
 
+Monorepo con **Next.js 16**, **Hono**, **PostgreSQL** y **Better Auth**. Los pagos van por **Stripe**, el video por **Cloudflare Stream**, los emails por **Resend** y los archivos por **DigitalOcean Spaces**.
+
+![Portada de Academia](docs/screenshots/landing.png)
+
 ## Funcionalidades
 
+- **Portada** de estilo terminal con datos reales: el temario del curso más popular, el catálogo destacado, el número de estudiantes y reseñas de alumnos.
 - **Catálogo público** con búsqueda, filtros por categoría, nivel y precio, y ordenación. Página de detalle con temario, vistas previas gratuitas, instructor, reseñas, SEO (metadata, JSON-LD `Course`) y sitemap.
 - **Compra**: carrito (también para invitados, se fusiona al iniciar sesión), cupones (porcentaje o monto fijo, por curso o globales, con límite de usos y caducidad), "comprar ahora", cursos gratis y Stripe Checkout. El precio lo calcula siempre la API.
 - **Aula**:
@@ -14,9 +19,25 @@ Plataforma de venta de cursos en video organizados en secciones y capítulos, al
 - **Cuenta**: registro con verificación de email, login (también con Google, GitHub o Microsoft), recuperación de contraseña, perfil (datos, contraseña, avatar y cuentas conectadas), mis cursos, mis compras y mis certificados.
 - **Panel de administración**:
   - Dashboard de ventas.
-  - CRUD de cursos con constructor de temario (arrastrar y soltar), subida de videos a Stream (tus, reanudable) y recursos.
+  - CRUD de cursos con constructor de temario (arrastrar y soltar), subida de videos a Stream (tus, por trozos, se recupera de cortes de red) y recursos.
   - Categorías, cupones, usuarios (rol y accesos manuales), órdenes (con reembolso), moderación de reseñas y bandeja de preguntas sin responder.
+- **Documentación de la API** con OpenAPI 3.1 y Swagger UI en `/api/docs`, generada a partir de las rutas y sus validadores Zod.
 - Tema claro/oscuro y paleta de comandos (`Ctrl K`) en toda la aplicación.
+
+## Capturas
+
+| | |
+|---|---|
+| ![Catálogo con filtros](docs/screenshots/catalogo.png) | ![Detalle de un curso](docs/screenshots/curso.png) |
+| **Catálogo** con búsqueda, filtros y ordenación | **Detalle del curso** con temario, vistas previas y tarjeta de compra |
+| ![Aula con preguntas](docs/screenshots/aula.png) | ![Carrito con cupón](docs/screenshots/carrito.png) |
+| **Aula**: reproductor, temario con progreso y preguntas con respuesta del instructor | **Carrito** con un cupón aplicado |
+| ![Mis cursos](docs/screenshots/mis-cursos.png) | ![Editor de temario](docs/screenshots/admin-temario.png) |
+| **Mis cursos** con el progreso de cada uno | **Panel de administración**: temario con arrastrar y soltar |
+| ![Listado de cursos del panel](docs/screenshots/admin-cursos.png) | ![Swagger UI](docs/screenshots/swagger.png) |
+| **Panel**: cursos con búsqueda, filtros y paginación | **Documentación de la API** en Swagger UI |
+
+Las capturas usan los datos de demostración del seed. Sin credenciales de Cloudflare Stream, el aula muestra el aviso de «video no disponible» en lugar del reproductor.
 
 ## Stack
 
@@ -25,7 +46,8 @@ Plataforma de venta de cursos en video organizados en secciones y capítulos, al
 | Web (`apps/web`, puerto 3010) | Next.js 16 (App Router), Tailwind v4, shadcn/ui, TanStack Query, react-hook-form |
 | API (`apps/api`, puerto 3011) | Hono sobre Node, Drizzle ORM, PostgreSQL, Better Auth |
 | Compartido (`packages/shared`) | Esquemas Zod, enums y cálculo de precios |
-| Servicios | Stripe (pagos), Cloudflare Stream (video), Resend (email), DigitalOcean Spaces (archivos) |
+| Documentación de la API | OpenAPI 3.1 con `hono-openapi` y Swagger UI (`@hono/swagger-ui`) |
+| Servicios | Stripe (pagos), Cloudflare Stream (video), Resend (email), DigitalOcean Spaces (archivos), Google, GitHub y Microsoft (login) |
 
 En desarrollo la web reenvía `/api/*` a la API (`rewrites` de Next), así que todo va por el mismo origen y la cookie de sesión no necesita CORS. El cliente de la web está tipado de extremo a extremo con Hono RPC.
 
@@ -135,7 +157,7 @@ Solo se piden los scopes `openid profile email`: la app no accede a Microsoft Gr
 | `pnpm dev` | Web y API en modo desarrollo |
 | `pnpm typecheck` | Comprobación de tipos en todo el monorepo |
 | `pnpm lint` | ESLint (web) y comprobación de tipos (api y shared) |
-| `pnpm test` | Tests unitarios (precios, reglas de progreso) |
+| `pnpm test` | Tests unitarios (precios, reglas de progreso, especificación OpenAPI) |
 | `pnpm --filter @academia/api test:integration` | Tests de la API contra una base `academia_test` en el Postgres de Docker |
 | `pnpm db:generate` | Genera una migración tras cambiar el esquema de Drizzle |
 | `pnpm db:migrate` / `pnpm db:seed` | Aplica migraciones / carga los datos de demostración |
@@ -160,3 +182,4 @@ Solo se piden los scopes `openid profile email`: la app no accede a Microsoft Gr
 ## Documentación
 
 - [Arquitectura](docs/ARCHITECTURE.md): componentes, estructura del monorepo, API, modelo de datos, flujos clave, autenticación, frontend, decisiones de diseño y tests.
+- **API**: con el proyecto en marcha, Swagger UI está en [localhost:3010/api/docs](http://localhost:3010/api/docs) y la especificación en `/api/openapi.json`. Fuera de producción se activan solos; en producción solo con `ENABLE_API_DOCS=true`. Cada ruta nueva necesita su `doc("…")`, o falla el test `apps/api/src/routes/docs.test.ts`.
