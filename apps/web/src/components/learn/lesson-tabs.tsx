@@ -13,6 +13,9 @@ type TabValue = (typeof TABS)[number];
 
 const isTab = (value: string | null): value is TabValue => TABS.includes(value as TabValue);
 
+// Pestañas como la navegación de la portada: monoespaciada, en minúsculas y subrayado con el acento.
+const triggerClass = "flex-none px-1 font-term text-[13px] after:bg-term-accent data-active:text-term-text";
+
 export function LessonTabs({ chapter, instructor }: { chapter: LearnChapter; instructor: LearnData["instructor"] }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,35 +33,43 @@ export function LessonTabs({ chapter, instructor }: { chapter: LearnChapter; ins
 
   return (
     <Tabs value={tab} onValueChange={setTab} className="gap-6">
-      <div className="-mx-4 overflow-x-auto overflow-y-hidden border-b px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-        <TabsList variant="line" className="h-10">
-          <TabsTrigger value="descripcion">Descripción</TabsTrigger>
-          <TabsTrigger value="recursos">
-            Recursos
+      <div className="-mx-5 overflow-x-auto overflow-y-hidden border-b border-term-border px-5 [scrollbar-width:none] sm:mx-0 sm:px-0">
+        <TabsList variant="line" className="h-10 gap-3">
+          <TabsTrigger value="descripcion" className={triggerClass}>
+            descripción
+          </TabsTrigger>
+          <TabsTrigger value="recursos" className={triggerClass}>
+            recursos
             {chapter.resources.length > 0 && (
               <Badge variant="secondary" className="h-4.5 px-1.5 text-[10px]">
                 {chapter.resources.length}
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="comentarios">Comentarios</TabsTrigger>
-          <TabsTrigger value="preguntas">Preguntas</TabsTrigger>
+          <TabsTrigger value="comentarios" className={triggerClass}>
+            comentarios
+          </TabsTrigger>
+          <TabsTrigger value="preguntas" className={triggerClass}>
+            preguntas
+          </TabsTrigger>
         </TabsList>
       </div>
 
       <TabsContent value="descripcion" className="space-y-8">
         {chapter.description.trim() ? (
-          <p className="max-w-3xl leading-relaxed whitespace-pre-line text-foreground/90">{chapter.description}</p>
+          <p className="max-w-3xl text-base leading-relaxed whitespace-pre-line text-term-text/90">{chapter.description}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">Esta clase no tiene descripción.</p>
+          <p className="font-term text-[13px] text-term-muted">Esta clase no tiene descripción.</p>
         )}
         {instructor && (
-          <div className="flex max-w-3xl items-center gap-4 rounded-xl border bg-muted/30 p-4">
+          <div className="flex max-w-3xl items-center gap-4 rounded-[14px] border border-term-border bg-term-surface p-4">
             <UserAvatar name={instructor.name} image={instructor.image} className="size-12" />
-            <div className="min-w-0">
-              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Instructor</p>
-              <p className="font-heading font-semibold">{instructor.name}</p>
-              {instructor.headline && <p className="text-sm text-muted-foreground">{instructor.headline}</p>}
+            <div className="flex min-w-0 flex-col items-start gap-1">
+              <span className="rounded-full bg-term-accent px-2 py-0.5 font-term text-[11px] font-bold text-term-bg">
+                instructor
+              </span>
+              <p className="font-semibold">{instructor.name}</p>
+              {instructor.headline && <p className="text-sm text-term-muted">{instructor.headline}</p>}
             </div>
           </div>
         )}

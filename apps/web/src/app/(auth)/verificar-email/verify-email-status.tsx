@@ -9,14 +9,35 @@ import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import { authClient, useSession } from "@/lib/auth-client";
 import { authErrorMessage } from "@/lib/auth-errors";
+import { cn } from "@/lib/utils";
 
-function StatusIcon({ children, tone }: { children: React.ReactNode; tone: "primary" | "success" | "danger" }) {
+function Status({
+  icon,
+  tone,
+  children,
+}: {
+  icon: React.ReactNode;
+  tone: "accent" | "ok" | "danger";
+  children: React.ReactNode;
+}) {
   const tones = {
-    primary: "bg-primary/10 text-primary",
-    success: "bg-emerald-500/10 text-emerald-600",
-    danger: "bg-destructive/10 text-destructive",
+    accent: "text-term-accent",
+    ok: "text-term-ok",
+    danger: "text-destructive",
   };
-  return <div className={`mx-auto grid size-12 place-items-center rounded-full ${tones[tone]}`}>{children}</div>;
+  return (
+    <div className="flex gap-3 text-sm text-term-muted">
+      <span
+        className={cn(
+          "grid size-10 shrink-0 place-items-center rounded-[10px] border border-term-border bg-term-raised [&_svg]:size-5",
+          tones[tone],
+        )}
+      >
+        {icon}
+      </span>
+      <div className="flex flex-col items-start gap-4">{children}</div>
+    </div>
+  );
 }
 
 export function VerifyEmailStatus() {
@@ -38,52 +59,49 @@ export function VerifyEmailStatus() {
   // Recién registrado: aún no ha hecho clic en el enlace.
   if (params.get("enviado")) {
     return (
-      <AuthCard title="Confirma tu email">
-        <div className="space-y-4 text-center text-sm text-muted-foreground">
-          <StatusIcon tone="primary">
-            <MailCheck className="size-6" />
-          </StatusIcon>
+      <AuthCard file="verificar-email.sh" title="Confirma tu email">
+        <Status tone="accent" icon={<MailCheck />}>
           <p>
-            Te enviamos un enlace de confirmación{email ? <> a <strong className="text-foreground">{email}</strong></> : null}.
-            Ábrelo para activar tu cuenta.
+            Te enviamos un enlace de confirmación
+            {email ? (
+              <>
+                {" "}
+                a <strong className="font-term font-medium text-term-text">{email}</strong>
+              </>
+            ) : null}
+            . Ábrelo para activar tu cuenta.
           </p>
           {email && (
             <Button variant="outline" onClick={resend} disabled={resending}>
-              Reenviar enlace
+              reenviar enlace
             </Button>
           )}
-        </div>
+        </Status>
       </AuthCard>
     );
   }
 
   if (error) {
     return (
-      <AuthCard title="No pudimos confirmar tu email">
-        <div className="space-y-4 text-center text-sm text-muted-foreground">
-          <StatusIcon tone="danger">
-            <CircleX className="size-6" />
-          </StatusIcon>
+      <AuthCard file="verificar-email.sh" title="No pudimos confirmar tu email">
+        <Status tone="danger" icon={<CircleX />}>
           <p>{authErrorMessage({ code: error.toUpperCase() })}. Inicia sesión para recibir un enlace nuevo.</p>
           <Button asChild>
-            <Link href="/login">Ir a iniciar sesión</Link>
+            <Link href="/login">ir a iniciar sesión</Link>
           </Button>
-        </div>
+        </Status>
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard title="¡Email confirmado!">
-      <div className="space-y-4 text-center text-sm text-muted-foreground">
-        <StatusIcon tone="success">
-          <CircleCheck className="size-6" />
-        </StatusIcon>
+    <AuthCard file="verificar-email.sh" title="¡Email confirmado!">
+      <Status tone="ok" icon={<CircleCheck />}>
         <p>Tu cuenta está activa. Ya puedes empezar a aprender.</p>
         <Button asChild>
-          <Link href={session ? "/mis-cursos" : "/login"}>{session ? "Ir a mis cursos" : "Iniciar sesión"}</Link>
+          <Link href={session ? "/mis-cursos" : "/login"}>{session ? "ir a mis cursos →" : "iniciar sesión"}</Link>
         </Button>
-      </div>
+      </Status>
     </AuthCard>
   );
 }

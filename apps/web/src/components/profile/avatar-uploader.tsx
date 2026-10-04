@@ -6,8 +6,8 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { ProfileSection } from "@/components/profile/profile-section";
 import { api, call, errorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { uploadToSpaces } from "@/lib/upload";
@@ -71,21 +71,17 @@ export function AvatarUploader({ name, image }: { name: string; image: string | 
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading">Foto de perfil</CardTitle>
-        <CardDescription>JPG, PNG o WebP de hasta 2 MB.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col items-center gap-4 sm:flex-row">
+    <ProfileSection file="avatar.png" title="Foto de perfil" description="JPG, PNG o WebP de hasta 2 MB.">
+      <div className="flex flex-col items-center gap-4 sm:flex-row">
         <UserAvatar name={name} image={image} className="size-20 text-lg" />
         <div className="flex w-full flex-1 flex-col gap-3">
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" disabled={busy} onClick={() => inputRef.current?.click()}>
-              <Camera /> {image ? "Cambiar foto" : "Subir foto"}
+              <Camera /> {image ? "cambiar foto" : "subir foto"}
             </Button>
             {image && (
               <Button type="button" variant="ghost" disabled={busy} onClick={onRemove}>
-                <Trash2 /> Quitar
+                <Trash2 /> quitar
               </Button>
             )}
           </div>
@@ -99,7 +95,7 @@ export function AvatarUploader({ name, image }: { name: string; image: string | 
             onChange={(event) => onFile(event.target.files?.[0])}
           />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </ProfileSection>
   );
 }

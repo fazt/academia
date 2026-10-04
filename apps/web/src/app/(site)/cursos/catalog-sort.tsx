@@ -19,7 +19,7 @@ export function CatalogSort({ value }: { value: CourseSort }) {
         router.push(`${pathname}?${next.toString()}`, { scroll: false });
       }}
     >
-      <SelectTrigger className="w-56" aria-label="Ordenar por">
+      <SelectTrigger className="w-56 font-term text-[13px]" aria-label="Ordenar por">
         <SelectValue />
       </SelectTrigger>
       <SelectContent align="end">

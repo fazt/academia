@@ -1,5 +1,4 @@
 import { COURSE_LEVEL_LABELS } from "@academia/shared";
-import { Check, Globe, RefreshCw, Users } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +7,7 @@ import { CourseDetailClient } from "@/components/course/course-detail-client";
 import { RatingSummary } from "@/components/course/rating-stars";
 import { ReviewsSection } from "@/components/course/reviews-section";
 import { Container } from "@/components/layout/page-header";
+import { TermPanel } from "@/components/layout/term";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatDate, formatNumber, formatPrice } from "@/lib/format";
 import { fetchOrNull, publicApi } from "@/lib/server-api";
@@ -77,45 +77,48 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
-      <section className="bg-neutral-950 text-neutral-50">
+      <section className="border-b border-term-border">
         <Container className="py-10 lg:py-14">
-          <div className="max-w-3xl space-y-4 lg:pr-8 xl:max-w-[calc(100%-400px)]">
-            <nav className="flex items-center gap-2 text-sm text-neutral-400" aria-label="Migas de pan">
-              <Link href="/cursos" className="hover:text-white">
-                Cursos
+          <div className="flex flex-col gap-5 lg:max-w-[calc(100%-400px)]">
+            <nav className="flex flex-wrap items-center gap-x-1 font-term text-[13px] text-term-muted" aria-label="Migas de pan">
+              <Link href="/cursos" className="transition-colors hover:text-term-text">
+                cursos<span className="text-term-accent">/</span>
               </Link>
               {course.category && (
-                <>
-                  <span>/</span>
-                  <Link href={`/cursos?category=${course.category.slug}`} className="text-indigo-300 hover:text-white">
-                    {course.category.name}
-                  </Link>
-                </>
+                <Link href={`/cursos?category=${course.category.slug}`} className="transition-colors hover:text-term-text">
+                  {course.category.slug}
+                  <span className="text-term-accent">/</span>
+                  <span className="sr-only"> ({course.category.name})</span>
+                </Link>
               )}
+              <span aria-current="page" className="truncate text-term-text">
+                {course.slug}
+              </span>
             </nav>
-            <h1 className="font-heading text-3xl leading-tight font-bold tracking-tight text-balance sm:text-4xl">
+            <h1 className="font-term text-[clamp(2rem,4vw,3.25rem)] leading-[1.08] font-extrabold tracking-[-0.03em] text-balance">
               {course.title}
             </h1>
-            {course.subtitle && <p className="text-lg text-neutral-300">{course.subtitle}</p>}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm [&_.text-muted-foreground]:text-neutral-400">
+            {course.subtitle && <p className="max-w-[640px] text-[19px] text-pretty text-term-muted">{course.subtitle}</p>}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 font-term text-[13px] text-term-muted">
               <RatingSummary avg={course.ratingAvg} count={course.ratingCount} />
-              <span className="inline-flex items-center gap-1.5 text-neutral-300">
-                <Users className="size-4" /> {formatNumber(course.studentsCount)}{" "}
-                {course.studentsCount === 1 ? "estudiante" : "estudiantes"}
+              <span aria-hidden>·</span>
+              <span>
+                {formatNumber(course.studentsCount)} {course.studentsCount === 1 ? "estudiante" : "estudiantes"}
               </span>
-              <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs">{COURSE_LEVEL_LABELS[course.level]}</span>
+              <span aria-hidden>·</span>
+              <span>{COURSE_LEVEL_LABELS[course.level].toLowerCase()}</span>
+              <span aria-hidden>·</span>
+              <span>{(LANGUAGES[course.language] ?? course.language).toLowerCase()}</span>
             </div>
-            <p className="text-sm text-neutral-300">
-              Creado por <span className="font-medium text-indigo-300">{course.instructor.name}</span>
-            </p>
-            <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-neutral-400">
-              <span className="inline-flex items-center gap-1.5">
-                <RefreshCw className="size-4" /> Actualizado el {formatDate(course.updatedAt)}
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-term-muted">
+              <span>
+                Creado por <span className="font-semibold text-term-text">{course.instructor.name}</span>
               </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Globe className="size-4" /> {LANGUAGES[course.language] ?? course.language}
+              <span aria-hidden>·</span>
+              <span className="font-term text-[13px]">actualizado el {formatDate(course.updatedAt)}</span>
+              <span className="font-term text-[13px] font-extrabold text-term-text lg:hidden">
+                · {course.priceCents === 0 ? "gratis" : formatPrice(course.priceCents, course.currency)}
               </span>
-              <span className="lg:hidden">· {formatPrice(course.priceCents, course.currency)}</span>
             </div>
           </div>
         </Container>
@@ -127,16 +130,23 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           autoPreview={search.preview === "1"}
           intro={
             course.learningOutcomes.length > 0 && (
-              <section key="intro" className="rounded-xl border p-6">
-                <h2 className="mb-4 font-heading text-2xl font-bold">Lo que aprenderás</h2>
-                <ul className="grid gap-3 sm:grid-cols-2">
-                  {course.learningOutcomes.map((outcome) => (
-                    <li key={outcome} className="flex gap-2.5 text-sm">
-                      <Check className="mt-0.5 size-4 shrink-0 text-primary" /> {outcome}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+              <TermPanel key="intro" title="aprenderas.md">
+                <section className="p-6">
+                  <h2 className="mb-4 font-term text-2xl font-extrabold tracking-[-0.02em]">
+                    <span aria-hidden className="text-term-accent">#</span> Lo que aprenderás
+                  </h2>
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {course.learningOutcomes.map((outcome) => (
+                      <li key={outcome} className="flex gap-2.5 text-sm">
+                        <span aria-hidden className="font-term text-term-ok">
+                          ✓
+                        </span>
+                        {outcome}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </TermPanel>
             )
           }
         >
@@ -144,10 +154,17 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
           <>
             {course.requirements.length > 0 && (
               <section key="requirements">
-                <h2 className="mb-3 font-heading text-2xl font-bold">Requisitos</h2>
-                <ul className="list-disc space-y-1.5 pl-5 text-sm">
+                <h2 className="mb-4 font-term text-2xl font-extrabold tracking-[-0.02em]">
+                  <span aria-hidden className="text-term-accent">#</span> Requisitos
+                </h2>
+                <ul className="space-y-2 text-sm">
                   {course.requirements.map((req) => (
-                    <li key={req}>{req}</li>
+                    <li key={req} className="flex gap-2.5">
+                      <span aria-hidden className="font-term text-term-muted">
+                        -
+                      </span>
+                      {req}
+                    </li>
                   ))}
                 </ul>
               </section>
@@ -155,24 +172,34 @@ export default async function CoursePage({ params, searchParams }: PageProps<"/c
 
             {course.description && (
               <section key="description">
-                <h2 className="mb-3 font-heading text-2xl font-bold">Descripción</h2>
-                <div className="max-w-none text-sm leading-relaxed whitespace-pre-line text-foreground/90">
+                <h2 className="mb-4 font-term text-2xl font-extrabold tracking-[-0.02em]">
+                  <span aria-hidden className="text-term-accent">#</span> Descripción
+                </h2>
+                <div className="max-w-[72ch] leading-relaxed whitespace-pre-line text-term-text/90">
                   {course.description}
                 </div>
               </section>
             )}
 
-            <section key="instructor">
-              <h2 className="mb-4 font-heading text-2xl font-bold">Instructor</h2>
-              <div className="flex gap-4">
-                <UserAvatar name={course.instructor.name} image={course.instructor.image} className="size-16 text-lg" />
-                <div className="space-y-1">
-                  <p className="font-heading text-lg font-semibold text-primary">{course.instructor.name}</p>
-                  {course.instructor.headline && <p className="text-sm text-muted-foreground">{course.instructor.headline}</p>}
-                  {course.instructor.bio && <p className="pt-2 text-sm whitespace-pre-line">{course.instructor.bio}</p>}
+            <TermPanel key="instructor" title="instructor.md">
+              <section className="p-6">
+                <h2 className="mb-4 font-term text-2xl font-extrabold tracking-[-0.02em]">
+                  <span aria-hidden className="text-term-accent">#</span> Instructor
+                </h2>
+                <div className="flex gap-4">
+                  <UserAvatar name={course.instructor.name} image={course.instructor.image} className="size-16 text-lg" />
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-lg font-semibold">{course.instructor.name}</p>
+                    {course.instructor.headline && (
+                      <p className="font-term text-[13px] text-term-muted">{course.instructor.headline}</p>
+                    )}
+                    {course.instructor.bio && (
+                      <p className="pt-2 text-sm whitespace-pre-line text-term-text/90">{course.instructor.bio}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            </TermPanel>
 
             <ReviewsSection
               key="reviews"

@@ -105,7 +105,7 @@ export function TableToolbar({
   }, [value, q, setParams]);
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+    <div className="flex flex-col gap-2 font-term sm:flex-row sm:flex-wrap sm:items-center">
       <InputGroup className="sm:max-w-xs">
         <InputGroupAddon>
           <Search />
@@ -179,7 +179,10 @@ export function SortableHead({
     <TableHead className={className} aria-sort={active ? (table.order === "asc" ? "ascending" : "descending") : "none"}>
       <button
         type="button"
-        className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+        className={cn(
+          "-ml-1 inline-flex items-center gap-1 rounded px-1 py-0.5 transition-colors hover:text-term-text focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none",
+          active && "text-term-text",
+        )}
         onClick={() =>
           table.setParams({ sort: column, order: active && table.order === "desc" ? "asc" : "desc" })
         }
@@ -203,7 +206,7 @@ export function TablePagination({
   const from = total === 0 ? 0 : (table.page - 1) * table.pageSize + 1;
   const to = Math.min(total, table.page * table.pageSize);
   return (
-    <div className="flex flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
+    <div className="flex flex-col items-center justify-between gap-3 font-term text-[13px] text-term-muted sm:flex-row">
       <p>
         {total === 0 ? "Sin resultados" : `Mostrando ${from}–${to} de ${total}`}
       </p>
@@ -258,7 +261,7 @@ export function CopyEmail({ email, className }: { email: string; className?: str
   };
   return (
     <span className={cn("inline-flex max-w-full items-center gap-1", className)}>
-      <span className="truncate">{email}</span>
+      <span className="truncate font-term text-[13px]">{email}</span>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
@@ -329,7 +332,7 @@ export function TableErrorRow({ columns, message, onRetry }: { columns: number; 
       <TableCell colSpan={columns} className="py-10 text-center">
         <p className="mb-3 text-sm text-destructive">{message}</p>
         <Button variant="outline" size="sm" onClick={onRetry}>
-          Reintentar
+          reintentar
         </Button>
       </TableCell>
     </TableRow>

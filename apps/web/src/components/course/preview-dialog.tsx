@@ -28,26 +28,33 @@ export function PreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="p-5 pb-3">
-          <DialogDescription>Vista previa del curso</DialogDescription>
-          <DialogTitle className="font-heading text-lg">{courseTitle}</DialogTitle>
+          <DialogDescription className="font-term text-[13px]">
+            <span className="text-term-accent">$</span> play vista-previa
+          </DialogDescription>
+          <DialogTitle className="text-lg font-extrabold tracking-[-0.01em]">{courseTitle}</DialogTitle>
         </DialogHeader>
-        {active && open && <StreamPlayer key={active.id} chapterId={active.id} autoplay />}
+        {/* La pantalla del reproductor es oscura en los dos temas. */}
+        <div className="dark bg-term-screen">
+          {active && open && <StreamPlayer key={active.id} chapterId={active.id} autoplay />}
+        </div>
         {chapters.length > 1 && (
-          <div className="max-h-56 overflow-y-auto p-3">
-            <p className="px-2 pb-2 text-xs font-semibold text-muted-foreground uppercase">Clases de vista previa gratuitas</p>
+          <div className="max-h-56 overflow-y-auto border-t border-term-border p-3">
+            <p className="px-2 pb-2 font-term text-xs text-term-muted">clases de vista previa gratuitas</p>
             {chapters.map((chapter) => (
               <button
                 key={chapter.id}
                 type="button"
                 onClick={() => onActiveChange(chapter.id)}
+                aria-current={chapter.id === active?.id ? "true" : undefined}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left text-sm hover:bg-muted",
-                  chapter.id === active?.id && "bg-primary/10 font-medium text-primary",
+                  "flex w-full items-center gap-3 rounded-[10px] px-2.5 py-2 text-left text-sm transition-colors hover:bg-term-raised focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none",
+                  chapter.id === active?.id &&
+                    "bg-[color-mix(in_oklch,var(--term-accent)_12%,var(--term-surface))] font-semibold text-term-accent hover:bg-[color-mix(in_oklch,var(--term-accent)_12%,var(--term-surface))]",
                 )}
               >
                 <PlayCircle className="size-4 shrink-0" />
                 <span className="flex-1">{chapter.title}</span>
-                <span className="text-xs text-muted-foreground">{formatClock(chapter.durationSec)}</span>
+                <span className="font-term text-xs font-normal text-term-muted">{formatClock(chapter.durationSec)}</span>
               </button>
             ))}
           </div>

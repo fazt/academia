@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 import { SubmitButton, TextField } from "@/components/form/fields";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfileSection } from "@/components/profile/profile-section";
 import { FieldGroup } from "@/components/ui/field";
 import { authClient } from "@/lib/auth-client";
 import { authErrorMessage } from "@/lib/auth-errors";
@@ -43,34 +43,33 @@ function CreatePasswordCard({ email }: { email: string }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading">Contraseña</CardTitle>
-        <CardDescription>Tu cuenta no tiene contraseña. Crea una si también quieres entrar con tu email.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {sent ? (
-          <p className="flex gap-3 text-sm text-muted-foreground">
-            <MailCheck className="mt-0.5 size-4 shrink-0 text-primary" />
-            <span>
-              Te enviamos un enlace a <strong className="text-foreground">{email}</strong> para crear la contraseña.
-              Caduca en 1 hora y, al usarlo, tendrás que volver a iniciar sesión.
-            </span>
-          </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Te enviaremos un enlace a <strong className="text-foreground">{email}</strong> para elegirla.
-          </p>
-        )}
-      </CardContent>
-      {!sent && (
-        <CardFooter className="mt-6 justify-end">
+    <ProfileSection
+      file="contraseña"
+      title="Contraseña"
+      description="Tu cuenta no tiene contraseña. Crea una si también quieres entrar con tu email."
+      footer={
+        !sent && (
           <SubmitButton type="button" pending={pending} onClick={send}>
-            Enviar enlace
+            enviar enlace
           </SubmitButton>
-        </CardFooter>
+        )
+      }
+    >
+      {sent ? (
+        <p className="flex gap-3 text-sm text-term-muted">
+          <MailCheck className="mt-0.5 size-4 shrink-0 text-term-accent" />
+          <span>
+            Te enviamos un enlace a <strong className="font-term font-medium text-term-text">{email}</strong> para crear
+            la contraseña. Caduca en 1 hora y, al usarlo, tendrás que volver a iniciar sesión.
+          </span>
+        </p>
+      ) : (
+        <p className="text-sm text-term-muted">
+          Te enviaremos un enlace a <strong className="font-term font-medium text-term-text">{email}</strong> para
+          elegirla.
+        </p>
       )}
-    </Card>
+    </ProfileSection>
   );
 }
 
@@ -103,42 +102,38 @@ function ChangePasswordForm() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading">Contraseña</CardTitle>
-        <CardDescription>Al cambiarla se cerrarán tus sesiones en otros dispositivos.</CardDescription>
-      </CardHeader>
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
-        <CardContent>
-          <FieldGroup>
-            <TextField
-              control={form.control}
-              name="currentPassword"
-              label="Contraseña actual"
-              type="password"
-              autoComplete="current-password"
-            />
-            <TextField
-              control={form.control}
-              name="newPassword"
-              label="Nueva contraseña"
-              type="password"
-              autoComplete="new-password"
-              description="Mínimo 8 caracteres."
-            />
-            <TextField
-              control={form.control}
-              name="confirm"
-              label="Repite la nueva contraseña"
-              type="password"
-              autoComplete="new-password"
-            />
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="mt-6 justify-end">
-          <SubmitButton pending={pending}>Cambiar contraseña</SubmitButton>
-        </CardFooter>
-      </form>
-    </Card>
+    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <ProfileSection
+        file="contraseña"
+        title="Contraseña"
+        description="Al cambiarla se cerrarán tus sesiones en otros dispositivos."
+        footer={<SubmitButton pending={pending}>cambiar contraseña</SubmitButton>}
+      >
+        <FieldGroup>
+          <TextField
+            control={form.control}
+            name="currentPassword"
+            label="Contraseña actual"
+            type="password"
+            autoComplete="current-password"
+          />
+          <TextField
+            control={form.control}
+            name="newPassword"
+            label="Nueva contraseña"
+            type="password"
+            autoComplete="new-password"
+            description="Mínimo 8 caracteres."
+          />
+          <TextField
+            control={form.control}
+            name="confirm"
+            label="Repite la nueva contraseña"
+            type="password"
+            autoComplete="new-password"
+          />
+        </FieldGroup>
+      </ProfileSection>
+    </form>
   );
 }

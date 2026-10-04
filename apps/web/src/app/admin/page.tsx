@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowRight,
   BookOpen,
   CircleDollarSign,
   MessageCircleQuestion,
+  Plus,
   ShoppingBag,
   TrendingUp,
   Users,
@@ -14,8 +14,8 @@ import Link from "next/link";
 import { OrderStatusBadge } from "@/components/admin/badges";
 import { AdminPageHeader } from "@/components/admin/admin-page";
 import { RevenueChart } from "@/components/admin/revenue-chart";
+import { TermPanel } from "@/components/layout/term";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, call } from "@/lib/api";
 import { money } from "@/components/admin/money";
@@ -38,25 +38,36 @@ function Kpi({
   highlight?: boolean;
 }) {
   const body = (
-    <Card className={cn("h-full gap-3 transition-colors", href && "hover:border-primary/40", highlight && "border-amber-500/40")}>
-      <CardHeader>
-        <CardDescription>{label}</CardDescription>
-        <CardAction>
-          <span className={cn("grid size-8 place-items-center rounded-lg bg-primary/10 text-primary", highlight && "bg-amber-500/10 text-amber-600 dark:text-amber-400")}>
-            <Icon className="size-4" />
-          </span>
-        </CardAction>
-        <CardTitle className="font-heading text-2xl font-bold tabular-nums">{value}</CardTitle>
-      </CardHeader>
-      {hint && <CardContent className="text-xs text-muted-foreground">{hint}</CardContent>}
-    </Card>
+    <div
+      className={cn(
+        "flex h-full flex-col gap-3 rounded-[14px] border border-term-border bg-term-surface p-5 transition-colors",
+        href && "group-hover:border-term-border-strong group-hover:bg-term-raised",
+        highlight && "border-term-num/50 group-hover:border-term-num",
+      )}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-term text-xs text-term-muted">{label}</span>
+        <Icon className={cn("size-4 text-term-muted", highlight && "text-term-num")} />
+      </div>
+      <span className="font-term text-[28px] leading-none font-extrabold tracking-[-0.02em] tabular-nums">{value}</span>
+      {hint && <span className={cn("font-term text-xs text-term-muted", highlight && "text-term-num")}>{hint}</span>}
+    </div>
   );
   return href ? (
-    <Link href={href} className="rounded-xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
+    <Link href={href} className="group rounded-[14px] focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none">
       {body}
     </Link>
   ) : (
     body
+  );
+}
+
+/** Enlace "ver todo →" de la barra de un panel. */
+function PanelLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} className="shrink-0 text-term-accent hover:underline">
+      {children} →
+    </Link>
   );
 }
 
@@ -68,10 +79,13 @@ export default function AdminDashboardPage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Panel"
+        command="academia status"
         description="Resumen de ventas, alumnos y actividad de la academia."
         actions={
           <Button asChild>
-            <Link href="/admin/cursos/nuevo">Nuevo curso</Link>
+            <Link href="/admin/cursos/nuevo">
+              <Plus /> nuevo curso
+            </Link>
           </Button>
         }
       />
@@ -79,7 +93,7 @@ export default function AdminDashboardPage() {
       {stats.isLoading || !data ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} className="h-32 rounded-xl" />
+            <Skeleton key={i} className="h-32 rounded-[14px]" />
           ))}
         </div>
       ) : (
@@ -110,89 +124,76 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ingresos de los últimos 30 días</CardTitle>
-          <CardDescription>Importe cobrado por día (órdenes pagadas).</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <TermPanel title="ingresos --dias=30">
+        <div className="flex flex-col gap-4 p-5">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Ingresos de los últimos 30 días</h2>
+            <p className="text-sm text-term-muted">Importe cobrado por día (órdenes pagadas).</p>
+          </div>
           {data ? <RevenueChart series={data.series} currency={data.currency} /> : <Skeleton className="h-56 w-full" />}
-        </CardContent>
-      </Card>
+        </div>
+      </TermPanel>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Cursos más vendidos</CardTitle>
-            <CardAction>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin/cursos">
-                  Ver cursos <ArrowRight />
-                </Link>
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
+        <TermPanel title="cursos --top" aside={<PanelLink href="/admin/cursos">ver cursos</PanelLink>}>
+          <div className="flex flex-col gap-4 p-5">
+            <h2 className="text-lg font-semibold">Cursos más vendidos</h2>
             {!data ? (
               <Skeleton className="h-40 w-full" />
             ) : data.topCourses.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">Aún no hay ventas.</p>
+              <p className="py-8 text-center text-sm text-term-muted">Aún no hay ventas.</p>
             ) : (
-              <ol className="space-y-3">
+              <ol className="space-y-3.5">
                 {data.topCourses.map((course, index) => {
                   const maxSales = data.topCourses[0]?.sales || 1;
                   return (
                     <li key={course.id} className="space-y-1.5">
-                      <div className="flex items-center justify-between gap-3 text-sm">
-                        <Link href={`/admin/cursos/${course.id}`} className="min-w-0 truncate font-medium hover:text-primary">
-                          <span className="mr-2 text-muted-foreground tabular-nums">{index + 1}.</span>
+                      <div className="flex items-baseline justify-between gap-3 text-sm">
+                        <Link
+                          href={`/admin/cursos/${course.id}`}
+                          className="min-w-0 truncate font-medium transition-colors hover:text-term-accent"
+                        >
+                          <span className="mr-2 font-term text-[13px] text-term-num tabular-nums">{index + 1}.</span>
                           {course.title}
                         </Link>
-                        <span className="shrink-0 text-muted-foreground tabular-nums">
+                        <span className="shrink-0 font-term text-[13px] text-term-muted tabular-nums">
                           {course.sales} · {money(course.revenueCents, data.currency)}
                         </span>
                       </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full rounded-full bg-chart-1" style={{ width: `${(course.sales / maxSales) * 100}%` }} />
+                      <div className="h-1 overflow-hidden rounded bg-term-raised">
+                        <div className="h-full rounded bg-chart-1" style={{ width: `${(course.sales / maxSales) * 100}%` }} />
                       </div>
                     </li>
                   );
                 })}
               </ol>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </TermPanel>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Órdenes recientes</CardTitle>
-            <CardAction>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/admin/ordenes">
-                  Ver órdenes <ArrowRight />
-                </Link>
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
+        <TermPanel title="ordenes --recientes" aside={<PanelLink href="/admin/ordenes">ver órdenes</PanelLink>}>
+          <div className="flex flex-col gap-2 p-5">
+            <h2 className="text-lg font-semibold">Órdenes recientes</h2>
             {!data ? (
               <Skeleton className="h-40 w-full" />
             ) : data.recentOrders.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">Aún no hay órdenes.</p>
+              <p className="py-8 text-center text-sm text-term-muted">Aún no hay órdenes.</p>
             ) : (
-              <ul className="divide-y">
+              <ul className="divide-y divide-term-border">
                 {data.recentOrders.map((order) => (
                   <li key={order.id}>
                     <Link
                       href={`/admin/ordenes/${order.id}`}
-                      className="flex items-center justify-between gap-3 py-2.5 text-sm hover:text-primary"
+                      className="group flex items-center justify-between gap-3 py-2.5 text-sm"
                     >
                       <span className="min-w-0">
-                        <span className="block truncate font-medium">{order.user.name}</span>
-                        <span className="block text-xs text-muted-foreground">{formatDateTime(order.createdAt)}</span>
+                        <span className="block truncate font-medium transition-colors group-hover:text-term-accent">
+                          {order.user.name}
+                        </span>
+                        <span className="block font-term text-xs text-term-muted">{formatDateTime(order.createdAt)}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-3">
-                        <span className="tabular-nums">{money(order.totalCents, order.currency)}</span>
+                        <span className="font-term text-[13px] tabular-nums">{money(order.totalCents, order.currency)}</span>
                         <OrderStatusBadge status={order.status} />
                       </span>
                     </Link>
@@ -200,8 +201,8 @@ export default function AdminDashboardPage() {
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </TermPanel>
       </div>
     </div>
   );

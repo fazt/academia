@@ -64,6 +64,7 @@ function ReviewsTable() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Reseñas"
+        command="ls resenas/"
         description="Valoraciones de los alumnos. Ocultar una reseña la retira de la página del curso y de la media."
       />
       <TableCard
@@ -142,7 +143,7 @@ function ReviewsTable() {
                       <span className="text-muted-foreground">Sin comentario</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(review.createdAt)}</TableCell>
+                  <TableCell className="font-term text-[13px] text-muted-foreground">{formatDate(review.createdAt)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
                       {review.hidden ? <StatusPill>Oculta</StatusPill> : <StatusPill tone="success">Visible</StatusPill>}

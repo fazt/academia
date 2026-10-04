@@ -344,9 +344,9 @@ export function CouponForm({
           </CardContent>
           <CardFooter className="justify-end gap-2 border-t">
             <Button type="button" variant="outline" onClick={() => router.push("/admin/cupones")}>
-              Cancelar
+              cancelar
             </Button>
-            <SubmitButton pending={form.formState.isSubmitting}>{isEdit ? "Guardar cambios" : "Crear cupón"}</SubmitButton>
+            <SubmitButton pending={form.formState.isSubmitting}>{isEdit ? "guardar cambios" : "crear cupón"}</SubmitButton>
           </CardFooter>
         </Card>
       </div>

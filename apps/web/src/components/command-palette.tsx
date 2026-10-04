@@ -47,6 +47,9 @@ export function openCommandPalette() {
 
 type Item = { label: string; href: string; icon: React.ComponentType<{ className?: string }>; keywords?: string[] };
 
+// El elemento activo resalta su icono con el acento, como el capítulo actual del aula.
+const itemClass = "data-selected:*:[svg]:text-term-accent";
+
 const PUBLIC_ITEMS: Item[] = [
   { label: "Inicio", href: "/", icon: Home },
   { label: "Explorar cursos", href: "/cursos", icon: Search, keywords: ["catálogo", "buscar"] },
@@ -104,6 +107,7 @@ export function CommandPalette() {
     items.map((item) => (
       <CommandItem
         key={item.href}
+        className={itemClass}
         value={`${item.label} ${item.keywords?.join(" ") ?? ""}`}
         onSelect={() => run(() => router.push(item.href))}
       >
@@ -114,7 +118,7 @@ export function CommandPalette() {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen} title="Paleta de comandos" description="Busca una página o acción">
-      <Command>
+      <Command className="font-term">
         <CommandInput placeholder="¿A dónde quieres ir?" />
         <CommandList>
           <CommandEmpty>Sin resultados.</CommandEmpty>
@@ -133,13 +137,13 @@ export function CommandPalette() {
           )}
           <CommandSeparator />
           <CommandGroup heading="Tema">
-            <CommandItem value="tema claro" onSelect={() => run(() => setTheme("light"))}>
+            <CommandItem className={itemClass} value="tema claro" onSelect={() => run(() => setTheme("light"))}>
               <Sun /> Tema claro
             </CommandItem>
-            <CommandItem value="tema oscuro" onSelect={() => run(() => setTheme("dark"))}>
+            <CommandItem className={itemClass} value="tema oscuro" onSelect={() => run(() => setTheme("dark"))}>
               <Moon /> Tema oscuro
             </CommandItem>
-            <CommandItem value="tema del sistema" onSelect={() => run(() => setTheme("system"))}>
+            <CommandItem className={itemClass} value="tema del sistema" onSelect={() => run(() => setTheme("system"))}>
               <Monitor /> Tema del sistema
             </CommandItem>
           </CommandGroup>
@@ -147,6 +151,7 @@ export function CommandPalette() {
           <CommandGroup heading="Cuenta">
             {session ? (
               <CommandItem
+                className={itemClass}
                 value="cerrar sesión salir"
                 onSelect={() =>
                   run(async () => {
@@ -160,18 +165,29 @@ export function CommandPalette() {
               </CommandItem>
             ) : (
               <>
-                <CommandItem value="iniciar sesión entrar login" onSelect={() => run(() => router.push("/login"))}>
+                <CommandItem
+                  className={itemClass}
+                  value="iniciar sesión entrar login"
+                  onSelect={() => run(() => router.push("/login"))}
+                >
                   <LogIn /> Iniciar sesión
                 </CommandItem>
-                <CommandItem value="crear cuenta registro" onSelect={() => run(() => router.push("/registro"))}>
+                <CommandItem
+                  className={itemClass}
+                  value="crear cuenta registro"
+                  onSelect={() => run(() => router.push("/registro"))}
+                >
                   <UserPlus /> Crear cuenta
                 </CommandItem>
               </>
             )}
           </CommandGroup>
         </CommandList>
-        <div className="flex items-center justify-end gap-1 border-t px-3 py-2 text-xs text-muted-foreground">
-          Abre esta paleta con <CommandShortcut className="ml-1">Ctrl K</CommandShortcut>
+        <div className="flex items-center justify-end gap-1 border-t border-term-border px-3 py-2 text-xs text-term-muted">
+          <span className="text-term-accent">$</span> abre esta paleta con{" "}
+          <CommandShortcut className="ml-1 rounded border border-term-border px-1.5 py-0.5 tracking-normal">
+            ctrl k
+          </CommandShortcut>
         </div>
       </Command>
     </CommandDialog>

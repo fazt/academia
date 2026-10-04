@@ -61,19 +61,25 @@ export function CourseDetailClient({
           {intro}
 
           <section>
-            <h2 className="mb-1 font-heading text-2xl font-bold">Contenido del curso</h2>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <h2 className="mb-1 font-term text-2xl font-extrabold tracking-[-0.02em]">
+              <span aria-hidden className="text-term-accent">#</span> Contenido del curso
+            </h2>
+            <p className="mb-4 font-term text-[13px] text-term-muted">
               {course.sections.length} secciones · {totalChapters} clases · {formatDuration(course.durationSec)} en total
             </p>
-            <Accordion type="multiple" defaultValue={course.sections.slice(0, 1).map((s) => s.id)} className="rounded-xl border">
+            <Accordion
+              type="multiple"
+              defaultValue={course.sections.slice(0, 1).map((s) => s.id)}
+              className="overflow-hidden rounded-[14px] border border-term-border bg-term-surface"
+            >
               {course.sections.map((section) => {
                 const sectionDuration = section.chapters.reduce((sum, c) => sum + c.durationSec, 0);
                 return (
-                  <AccordionItem key={section.id} value={section.id} className="px-4">
+                  <AccordionItem key={section.id} value={section.id} className="border-term-border px-5">
                     <AccordionTrigger className="hover:no-underline">
                       <span className="flex flex-1 flex-wrap items-baseline justify-between gap-2 pr-3">
                         <span className="font-semibold">{section.title}</span>
-                        <span className="text-xs font-normal text-muted-foreground">
+                        <span className="font-term text-xs font-normal text-term-muted">
                           {section.chapters.length} clases · {formatDuration(sectionDuration)}
                         </span>
                       </span>
@@ -83,29 +89,34 @@ export function CourseDetailClient({
                         {section.chapters.map((chapter) => {
                           const canPreview = chapter.isFreePreview && chapter.hasVideo;
                           return (
-                            <li key={chapter.id} className="flex items-center gap-3 rounded-md py-1.5 text-sm">
+                            <li key={chapter.id} className="flex items-center gap-3 py-1.5 text-sm">
                               {canPreview ? (
-                                <PlayCircle className="size-4 shrink-0 text-primary" />
+                                <PlayCircle className="size-4 shrink-0 text-term-accent" />
                               ) : (
-                                <Lock className="size-4 shrink-0 text-muted-foreground" />
+                                <Lock className="size-4 shrink-0 text-term-muted" />
                               )}
                               {canPreview ? (
                                 <button
                                   type="button"
-                                  className="flex-1 text-left text-primary underline-offset-4 hover:underline"
+                                  className="flex-1 text-left underline-offset-4 hover:text-term-accent hover:underline focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none"
                                   onClick={() => preview.open(chapter.id)}
                                 >
                                   {chapter.title}
                                 </button>
                               ) : (
-                                <span className="flex-1">{chapter.title}</span>
+                                <span className="flex-1 text-term-muted">{chapter.title}</span>
                               )}
                               {canPreview && (
-                                <Button variant="link" size="sm" className="h-auto p-0" onClick={() => preview.open(chapter.id)}>
-                                  Vista previa
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="h-auto p-0 text-xs text-term-accent"
+                                  onClick={() => preview.open(chapter.id)}
+                                >
+                                  vista previa →
                                 </Button>
                               )}
-                              <span className="w-12 text-right text-xs text-muted-foreground tabular-nums">
+                              <span className="w-12 text-right font-term text-xs text-term-muted tabular-nums">
                                 {chapter.durationSec > 0 ? formatClock(chapter.durationSec) : "—"}
                               </span>
                             </li>

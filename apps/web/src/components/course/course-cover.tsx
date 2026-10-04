@@ -1,13 +1,12 @@
 import { cn } from "@/lib/utils";
 
-// Paletas para portadas sin imagen: se elige una por curso de forma estable.
-const GRADIENTS = [
-  "from-indigo-500 via-violet-500 to-fuchsia-500",
-  "from-sky-500 via-cyan-500 to-emerald-400",
-  "from-amber-400 via-orange-500 to-rose-500",
-  "from-emerald-500 via-teal-500 to-sky-500",
-  "from-rose-500 via-pink-500 to-violet-500",
-  "from-slate-700 via-slate-600 to-indigo-500",
+// Portadas sin imagen: una "pantalla" de terminal. El brillo del acento cambia de esquina
+// según el curso, de forma estable, para que dos portadas seguidas no sean idénticas.
+const GLOWS = [
+  "bg-[radial-gradient(circle_at_85%_15%,color-mix(in_oklch,var(--term-accent)_22%,transparent),transparent_55%)]",
+  "bg-[radial-gradient(circle_at_15%_20%,color-mix(in_oklch,var(--term-key)_20%,transparent),transparent_55%)]",
+  "bg-[radial-gradient(circle_at_80%_85%,color-mix(in_oklch,var(--term-num)_18%,transparent),transparent_55%)]",
+  "bg-[radial-gradient(circle_at_50%_0%,color-mix(in_oklch,var(--term-ok)_18%,transparent),transparent_60%)]",
 ];
 
 function hash(value: string) {
@@ -31,19 +30,19 @@ export function CourseCover({
       <img src={src} alt="" className={cn("aspect-video w-full object-cover", className)} loading="lazy" />
     );
   }
-  const gradient = GRADIENTS[hash(title) % GRADIENTS.length];
   return (
+    // Oscura en los dos temas, como la pantalla del reproductor.
     <div
       className={cn(
-        "relative flex aspect-video w-full items-end overflow-hidden bg-gradient-to-br p-4",
-        gradient,
+        "dark relative flex aspect-video w-full items-end overflow-hidden bg-term-screen p-4 font-term",
         className,
       )}
       aria-hidden
     >
-      <div className="absolute -top-6 -right-6 size-28 rounded-full bg-white/15" />
-      <div className="absolute right-10 bottom-6 size-12 rounded-full bg-white/10" />
-      <span className="relative line-clamp-2 font-heading text-lg leading-tight font-bold text-white drop-shadow-sm">
+      <div className={cn("absolute inset-0", GLOWS[hash(title) % GLOWS.length])} />
+      <div className="absolute inset-0 bg-[linear-gradient(var(--term-border)_1px,transparent_1px),linear-gradient(90deg,var(--term-border)_1px,transparent_1px)] [mask-image:linear-gradient(to_bottom,black,transparent_85%)] bg-[size:28px_28px] opacity-50" />
+      <span className="relative line-clamp-2 text-lg leading-tight font-extrabold tracking-[-0.01em] text-term-text">
+        <span className="text-term-accent">$ </span>
         {title}
       </span>
     </div>

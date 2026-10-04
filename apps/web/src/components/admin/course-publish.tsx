@@ -22,14 +22,14 @@ function CheckItem({ ok, children, required }: { ok: boolean; children: React.Re
       <span
         className={cn(
           "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full",
-          ok ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : required ? "bg-red-500/10 text-red-600 dark:text-red-400" : "bg-muted text-muted-foreground",
+          ok ? "bg-term-ok text-term-bg" : required ? "bg-destructive/10 text-destructive" : "bg-term-raised text-term-muted",
         )}
       >
-        {ok ? <Check className="size-3.5" /> : <CircleAlert className="size-3.5" />}
+        {ok ? <Check className="size-3" strokeWidth={3} /> : <CircleAlert className="size-3.5" />}
       </span>
       <span className={cn(!ok && "text-muted-foreground")}>
         {children}
-        {required && !ok && <span className="ml-1 text-xs font-medium text-red-600 dark:text-red-400">(obligatorio)</span>}
+        {required && !ok && <span className="ml-1 font-term text-xs font-medium text-destructive">(obligatorio)</span>}
       </span>
     </li>
   );
@@ -104,24 +104,24 @@ export function CoursePublish({ course }: { course: AdminCourse }) {
               Algún capítulo de vista previa gratuita
             </CheckItem>
           </ul>
-          <p className="mt-4 text-sm text-muted-foreground">
+          <p className="mt-4 font-term text-[13px] text-muted-foreground">
             Duración publicada: {formatDuration(course.durationSec)} · {course.chaptersCount} capítulos
           </p>
         </CardContent>
         <CardFooter className="flex flex-wrap gap-2 border-t">
           {course.status !== "published" && (
             <Button onClick={() => setStatus("published")} disabled={pending !== null}>
-              {pending === "published" ? <Spinner /> : <Rocket />} Publicar
+              {pending === "published" ? <Spinner /> : <Rocket />} publicar
             </Button>
           )}
           {course.status !== "draft" && (
             <Button variant="outline" onClick={() => setStatus("draft")} disabled={pending !== null}>
-              {pending === "draft" ? <Spinner /> : <EyeOff />} Pasar a borrador
+              {pending === "draft" ? <Spinner /> : <EyeOff />} pasar a borrador
             </Button>
           )}
           {course.status !== "archived" && (
             <Button variant="outline" onClick={() => setStatus("archived")} disabled={pending !== null}>
-              {pending === "archived" ? <Spinner /> : <Archive />} Archivar
+              {pending === "archived" ? <Spinner /> : <Archive />} archivar
             </Button>
           )}
         </CardFooter>
@@ -140,11 +140,11 @@ export function CoursePublish({ course }: { course: AdminCourse }) {
             destructive
             title="¿Borrar este curso?"
             description={`Se eliminarán «${course.title}», sus capítulos, videos y recursos. Esta acción no se puede deshacer.`}
-            confirmLabel="Borrar curso"
+            confirmLabel="borrar curso"
             onConfirm={remove}
             trigger={
               <Button variant="destructive">
-                <Trash2 /> Borrar curso
+                <Trash2 /> borrar curso
               </Button>
             }
           />

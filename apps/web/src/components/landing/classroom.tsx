@@ -1,4 +1,4 @@
-import { SectionTitle, TermPanel, TermSection } from "@/components/landing/section-title";
+import { SectionTitle, TermPanel, TermSection } from "@/components/layout/term";
 
 const line = "whitespace-pre-wrap break-words font-term text-[13px] leading-[1.8]";
 

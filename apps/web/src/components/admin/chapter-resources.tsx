@@ -65,17 +65,17 @@ export function ChapterResources({ courseId, chapter }: { courseId: string; chap
   return (
     <div className="space-y-2">
       {chapter.resources.length > 0 && (
-        <ul className="divide-y rounded-lg border bg-background">
+        <ul className="divide-y divide-term-border rounded-[10px] border border-term-border bg-term-bg">
           {chapter.resources.map((resource) => (
             <li key={resource.id} className="flex items-center gap-2 px-3 py-2 text-sm">
               <FileText className="size-4 shrink-0 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate">{resource.name}</span>
-              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{formatBytes(resource.sizeBytes)}</span>
+              <span className="min-w-0 flex-1 truncate font-term text-[13px]">{resource.name}</span>
+              <span className="shrink-0 font-term text-xs text-term-muted tabular-nums">{formatBytes(resource.sizeBytes)}</span>
               <ConfirmAction
                 destructive
                 title="¿Borrar este recurso?"
                 description={`Los alumnos dejarán de poder descargar «${resource.name}».`}
-                confirmLabel="Borrar"
+                confirmLabel="borrar"
                 onConfirm={() => remove(resource.id)}
                 trigger={
                   <Button size="icon-xs" variant="ghost" aria-label={`Borrar ${resource.name}`}>
@@ -99,13 +99,13 @@ export function ChapterResources({ courseId, chapter }: { courseId: string; chap
         }}
       />
       {progress !== null ? (
-        <div className="flex max-w-xs items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex max-w-xs items-center gap-2 font-term text-xs text-term-muted">
           <Progress value={progress} className="flex-1" />
           <span className="tabular-nums">{progress} %</span>
         </div>
       ) : (
         <Button size="xs" variant="outline" onClick={() => inputRef.current?.click()}>
-          <Paperclip /> Añadir recurso
+          <Paperclip /> añadir recurso
         </Button>
       )}
     </div>

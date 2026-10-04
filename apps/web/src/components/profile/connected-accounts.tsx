@@ -11,7 +11,7 @@ import {
   useRedirectPending,
 } from "@/components/auth/social-sign-in";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfileSection } from "@/components/profile/profile-section";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { authErrorMessage, oauthErrorMessage } from "@/lib/auth-errors";
@@ -73,26 +73,28 @@ export function ConnectedAccounts({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading">Cuentas conectadas</CardTitle>
-        <CardDescription>Entra con un clic, sin escribir tu contraseña.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <ProfileSection
+      file="cuentas-conectadas"
+      title="Cuentas conectadas"
+      description="Entra con un clic, sin escribir tu contraseña."
+    >
+      <div className="flex flex-col gap-3">
         {rows.map(({ id, name, Icon, account }) => (
-          <div key={id} className="flex items-center gap-3 rounded-lg border p-3">
-            <div className="grid size-9 shrink-0 place-items-center rounded-md bg-muted">
+          <div key={id} className="flex items-center gap-3 rounded-[10px] border border-term-border p-3">
+            <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-term-raised">
               <Icon className="size-5" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{name}</p>
-              <p className="text-sm text-muted-foreground">
-                {!account
-                  ? "No conectada"
-                  : onlyAccess
-                    ? "Es tu único acceso: crea una contraseña para poder desconectarla."
-                    : "Conectada"}
-              </p>
+              {account && onlyAccess ? (
+                <p className="text-sm text-term-muted">
+                  Es tu único acceso: crea una contraseña para poder desconectarla.
+                </p>
+              ) : (
+                <p className={account ? "font-term text-[13px] text-term-ok" : "font-term text-[13px] text-term-muted"}>
+                  {account ? "● conectada" : "no conectada"}
+                </p>
+              )}
             </div>
             <Button
               variant="outline"
@@ -101,11 +103,11 @@ export function ConnectedAccounts({
               disabled={pending !== null || (!!account && onlyAccess)}
             >
               {pending === id && <Spinner />}
-              {account ? "Desconectar" : "Conectar"}
+              {account ? "desconectar" : "conectar"}
             </Button>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </ProfileSection>
   );
 }

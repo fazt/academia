@@ -2,9 +2,10 @@
 
 import type { CommentKind } from "@academia/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, CircleDot, EyeOff, MessageCircleQuestion, MessagesSquare, Pencil, Reply, Trash2 } from "lucide-react";
+import { Check, CheckCircle2, EyeOff, MessageCircleQuestion, MessagesSquare, Pencil, Reply, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { TermPanel } from "@/components/layout/term";
 import { UserAvatar } from "@/components/user-avatar";
 import {
   AlertDialog,
@@ -17,7 +18,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,14 +35,14 @@ const COPY: Record<
 > = {
   comment: {
     placeholder: "Comparte un comentario sobre esta clase…",
-    submit: "Publicar comentario",
+    submit: "publicar comentario",
     emptyTitle: "Sin comentarios todavía",
     emptyText: "Sé el primero en compartir qué te pareció esta clase.",
     icon: <MessagesSquare />,
   },
   question: {
     placeholder: "¿Tienes una duda sobre esta clase? Explícala con detalle…",
-    submit: "Publicar pregunta",
+    submit: "publicar pregunta",
     emptyTitle: "Nadie ha preguntado aún",
     emptyText: "Si algo no te quedó claro, pregunta: el instructor te responderá.",
     icon: <MessageCircleQuestion />,
@@ -96,13 +96,13 @@ function Composer({
       />
       <div className="flex items-center justify-end gap-2">
         {value.length > MAX_LENGTH * 0.8 && (
-          <span className="mr-auto text-xs text-muted-foreground">
+          <span className="mr-auto font-term text-xs text-term-muted">
             {value.length}/{MAX_LENGTH}
           </span>
         )}
         {onCancel && (
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-            Cancelar
+            cancelar
           </Button>
         )}
         <Button type="submit" size="sm" disabled={!trimmed || pending}>
@@ -118,8 +118,8 @@ function DeleteButton({ onConfirm, isReply }: { onConfirm: () => void; isReply: 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="xs" className="text-muted-foreground">
-          <Trash2 /> Eliminar
+        <Button variant="ghost" size="xs" className="text-term-muted">
+          <Trash2 /> eliminar
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
@@ -131,9 +131,9 @@ function DeleteButton({ onConfirm, isReply }: { onConfirm: () => void; isReply: 
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>cancelar</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onClick={onConfirm}>
-            Eliminar
+            eliminar
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -162,15 +162,19 @@ function Message({ message, isReply, currentUserId, viewerIsAdmin, onEdit, onDel
     <div className={cn("flex gap-3", message.hidden && "opacity-70")}>
       <UserAvatar name={message.author.name} image={message.author.image} className={isReply ? "size-7" : "size-9"} />
       <div className="min-w-0 flex-1 space-y-1.5">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-          <span className="font-semibold">{message.author.name}</span>
-          {isInstructor && <Badge className="h-4.5 px-1.5 text-[10px]">Instructor</Badge>}
-          {viewerIsAdmin && message.hidden && (
-            <Badge variant="outline" className="h-4.5 gap-1 px-1.5 text-[10px]">
-              <EyeOff /> Oculto
-            </Badge>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-term text-[13px]">
+          <span className={cn("font-bold", isInstructor ? "text-term-accent" : "text-term-text")}>
+            {message.author.name}
+          </span>
+          {isInstructor && (
+            <span className="rounded-full bg-term-accent px-2 py-0.5 text-[11px] font-bold text-term-bg">instructor</span>
           )}
-          <span className="text-xs text-muted-foreground">
+          {viewerIsAdmin && message.hidden && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-term-border-strong px-2 py-0.5 text-[11px] text-term-muted">
+              <EyeOff className="size-3" aria-hidden /> oculto
+            </span>
+          )}
+          <span className="text-xs text-term-muted">
             {formatRelative(message.createdAt)}
             {edited && " · editado"}
           </span>
@@ -178,7 +182,7 @@ function Message({ message, isReply, currentUserId, viewerIsAdmin, onEdit, onDel
         {editing ? (
           <Composer
             placeholder="Edita tu mensaje"
-            submitLabel="Guardar"
+            submitLabel="guardar"
             pending={editPending}
             initialValue={message.body}
             autoFocus
@@ -195,8 +199,8 @@ function Message({ message, isReply, currentUserId, viewerIsAdmin, onEdit, onDel
           <div className="-ml-2 flex flex-wrap items-center gap-0.5">
             {actions}
             {isOwn && (
-              <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setEditing(true)}>
-                <Pencil /> Editar
+              <Button variant="ghost" size="xs" className="text-term-muted" onClick={() => setEditing(true)}>
+                <Pencil /> editar
               </Button>
             )}
             {(isOwn || viewerIsAdmin) && <DeleteButton isReply={isReply} onConfirm={() => onDelete(message.id)} />}
@@ -299,9 +303,9 @@ export function Discussion({ chapterId, kind }: { chapterId: string; kind: Comme
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filtrar preguntas">
           {(
             [
-              ["all", "Todas"],
-              ["open", "Sin resolver"],
-              ["resolved", "Resueltas"],
+              ["all", "todas"],
+              ["open", "sin resolver"],
+              ["resolved", "resueltas"],
             ] as const
           ).map(([value, label]) => (
             <Button
@@ -332,7 +336,7 @@ export function Discussion({ chapterId, kind }: { chapterId: string; kind: Comme
       ) : error ? (
         <p className="text-sm text-destructive">{errorMessage(error)}</p>
       ) : items.length === 0 ? (
-        <Empty className="border border-dashed py-10">
+        <Empty className="rounded-[14px] border border-dashed border-term-border-strong py-10">
           <EmptyHeader>
             <EmptyMedia variant="icon">{copy.icon}</EmptyMedia>
             <EmptyTitle>{filter === "all" ? copy.emptyTitle : "No hay preguntas con este filtro"}</EmptyTitle>
@@ -340,95 +344,104 @@ export function Discussion({ chapterId, kind }: { chapterId: string; kind: Comme
           </EmptyHeader>
         </Empty>
       ) : (
-        <ul className="space-y-4">
-          {items.map((thread) => {
-            const canResolve = kind === "question" && (thread.author.id === currentUserId || viewerIsAdmin);
-            return (
-              <li
-                key={thread.id}
-                id={`c-${thread.id}`}
-                className={cn(
-                  "scroll-mt-24 rounded-xl border bg-card p-4 transition-shadow",
-                  highlighted === thread.id && "ring-3 ring-primary/40",
-                )}
-              >
-                {kind === "question" && (
-                  <div className="mb-3">
-                    {thread.isResolved ? (
-                      <Badge className="gap-1 border-transparent bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                        <CheckCircle2 /> Resuelta
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="gap-1 text-muted-foreground">
-                        <CircleDot /> Sin resolver
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                <Message
-                  message={thread}
-                  isReply={false}
-                  currentUserId={currentUserId}
-                  viewerIsAdmin={viewerIsAdmin}
-                  editPending={edit.isPending}
-                  onEdit={(id, body) => edit.mutateAsync({ id, body })}
-                  onDelete={(id) => remove.mutate(id)}
-                  actions={
-                    <>
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        className="text-muted-foreground"
-                        onClick={() => setReplyingTo(replyingTo === thread.id ? null : thread.id)}
-                      >
-                        <Reply /> Responder
-                        {thread.replies.length > 0 && ` (${thread.replies.length})`}
-                      </Button>
-                      {canResolve && (
+        <TermPanel
+          title={kind === "question" ? "preguntas/" : "comentarios/"}
+          aside={
+            <span className="shrink-0">
+              {items.length} {items.length === 1 ? "hilo" : "hilos"}
+            </span>
+          }
+        >
+          <ul>
+            {items.map((thread) => {
+              const canResolve = kind === "question" && (thread.author.id === currentUserId || viewerIsAdmin);
+              return (
+                <li
+                  key={thread.id}
+                  id={`c-${thread.id}`}
+                  className={cn(
+                    "scroll-mt-24 border-b border-term-border px-4 py-5 transition-shadow last:border-b-0 sm:px-5",
+                    highlighted === thread.id && "ring-2 ring-term-accent/60 ring-inset",
+                  )}
+                >
+                  {kind === "question" && (
+                    <div className="mb-3">
+                      {thread.isResolved ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_oklch,var(--term-ok)_14%,transparent)] px-2 py-0.5 font-term text-[11px] font-bold text-term-ok">
+                          <Check className="size-3" strokeWidth={3} aria-hidden /> resuelta
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-term-border-strong px-2 py-0.5 font-term text-[11px] text-term-muted">
+                          <span aria-hidden className="size-1.5 rounded-full bg-term-num" /> sin resolver
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  <Message
+                    message={thread}
+                    isReply={false}
+                    currentUserId={currentUserId}
+                    viewerIsAdmin={viewerIsAdmin}
+                    editPending={edit.isPending}
+                    onEdit={(id, body) => edit.mutateAsync({ id, body })}
+                    onDelete={(id) => remove.mutate(id)}
+                    actions={
+                      <>
                         <Button
                           variant="ghost"
                           size="xs"
-                          className="text-muted-foreground"
-                          disabled={resolve.isPending}
-                          onClick={() => resolve.mutate({ id: thread.id, resolved: !thread.isResolved })}
+                          className="text-term-muted"
+                          onClick={() => setReplyingTo(replyingTo === thread.id ? null : thread.id)}
                         >
-                          <CheckCircle2 /> {thread.isResolved ? "Reabrir" : "Marcar como resuelta"}
+                          <Reply /> responder
+                          {thread.replies.length > 0 && ` (${thread.replies.length})`}
                         </Button>
-                      )}
-                    </>
-                  }
-                />
-                {(thread.replies.length > 0 || replyingTo === thread.id) && (
-                  <div className="mt-4 ml-4 space-y-4 border-l-2 pl-4 sm:ml-12">
-                    {thread.replies.map((reply) => (
-                      <div key={reply.id} id={`c-${reply.id}`} className="scroll-mt-24">
-                        <Message
-                          message={reply}
-                          isReply
-                          currentUserId={currentUserId}
-                          viewerIsAdmin={viewerIsAdmin}
-                          editPending={edit.isPending}
-                          onEdit={(id, body) => edit.mutateAsync({ id, body })}
-                          onDelete={(id) => remove.mutate(id)}
+                        {canResolve && (
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            className="text-term-muted"
+                            disabled={resolve.isPending}
+                            onClick={() => resolve.mutate({ id: thread.id, resolved: !thread.isResolved })}
+                          >
+                            <CheckCircle2 /> {thread.isResolved ? "reabrir" : "marcar como resuelta"}
+                          </Button>
+                        )}
+                      </>
+                    }
+                  />
+                  {(thread.replies.length > 0 || replyingTo === thread.id) && (
+                    <div className="mt-4 ml-4 space-y-4 border-l-2 border-term-border pl-4 sm:ml-12">
+                      {thread.replies.map((reply) => (
+                        <div key={reply.id} id={`c-${reply.id}`} className="scroll-mt-24">
+                          <Message
+                            message={reply}
+                            isReply
+                            currentUserId={currentUserId}
+                            viewerIsAdmin={viewerIsAdmin}
+                            editPending={edit.isPending}
+                            onEdit={(id, body) => edit.mutateAsync({ id, body })}
+                            onDelete={(id) => remove.mutate(id)}
+                          />
+                        </div>
+                      ))}
+                      {replyingTo === thread.id && (
+                        <Composer
+                          placeholder="Escribe tu respuesta…"
+                          submitLabel="responder"
+                          autoFocus
+                          pending={create.isPending && create.variables?.parentId === thread.id}
+                          onCancel={() => setReplyingTo(null)}
+                          onSubmit={(body) => create.mutateAsync({ body, parentId: thread.id })}
                         />
-                      </div>
-                    ))}
-                    {replyingTo === thread.id && (
-                      <Composer
-                        placeholder="Escribe tu respuesta…"
-                        submitLabel="Responder"
-                        autoFocus
-                        pending={create.isPending && create.variables?.parentId === thread.id}
-                        onCancel={() => setReplyingTo(null)}
-                        onSubmit={(body) => create.mutateAsync({ body, parentId: thread.id })}
-                      />
-                    )}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </TermPanel>
       )}
     </div>
   );

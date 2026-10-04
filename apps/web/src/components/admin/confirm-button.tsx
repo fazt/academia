@@ -22,7 +22,7 @@ export function ConfirmAction({
   trigger,
   title,
   description,
-  confirmLabel = "Confirmar",
+  confirmLabel = "confirmar",
   destructive = false,
   onConfirm,
 }: {
@@ -45,7 +45,7 @@ export function ConfirmAction({
           {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>cancelar</AlertDialogCancel>
           <AlertDialogAction
             variant={destructive ? "destructive" : "default"}
             disabled={pending}

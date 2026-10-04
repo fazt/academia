@@ -17,12 +17,12 @@ export default function EditCategoryPage() {
 
   if (category.isLoading) return <AdminPageSkeleton />;
   if (!category.data) {
-    return <NotFoundState error={category.error} title="Categoría no encontrada" backHref="/admin/categorias" backLabel="Volver a categorías" />;
+    return <NotFoundState error={category.error} title="Categoría no encontrada" backHref="/admin/categorias" backLabel="volver a categorías" />;
   }
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Editar categoría" description={category.data.name} backHref="/admin/categorias" backLabel="Categorías" />
+      <AdminPageHeader title="Editar categoría" command={`vim categorias/${category.data.slug}`} description={category.data.name} backHref="/admin/categorias" backLabel="Categorías" />
       <CategoryForm categoryId={id} initial={{ name: category.data.name, slug: category.data.slug }} />
     </div>
   );

@@ -81,6 +81,7 @@ export function CategoryForm({ categoryId, initial }: { categoryId?: string; ini
                     {...field}
                     id="slug"
                     aria-invalid={fieldState.invalid}
+                    className="font-term"
                     onChange={(event) => {
                       setSlugTouched(true);
                       field.onChange(event.target.value.toLowerCase());
@@ -95,9 +96,9 @@ export function CategoryForm({ categoryId, initial }: { categoryId?: string; ini
         </CardContent>
         <CardFooter className="mt-6 justify-end gap-2 border-t">
           <Button type="button" variant="outline" onClick={() => router.push("/admin/categorias")}>
-            Cancelar
+            cancelar
           </Button>
-          <SubmitButton pending={form.formState.isSubmitting}>{isEdit ? "Guardar cambios" : "Crear categoría"}</SubmitButton>
+          <SubmitButton pending={form.formState.isSubmitting}>{isEdit ? "guardar cambios" : "crear categoría"}</SubmitButton>
         </CardFooter>
       </form>
     </Card>

@@ -56,17 +56,17 @@ function StarPicker({
             onFocus={() => setHover(star)}
             onBlur={() => setHover(0)}
             onClick={() => onChange(star)}
-            className="rounded-md p-0.5 transition-transform hover:scale-110 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            className="rounded-md p-0.5 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none"
           >
             <Star
-              className={cn("size-8 transition-colors", star <= shown ? "text-star" : "text-muted-foreground/30")}
+              className={cn("size-8 transition-colors", star <= shown ? "text-star" : "text-term-border-strong")}
               fill="currentColor"
               strokeWidth={0}
             />
           </button>
         ))}
       </div>
-      <span className="text-sm font-medium text-muted-foreground">{RATING_LABELS[shown]}</span>
+      <span className="font-term text-[13px] text-term-muted">{RATING_LABELS[shown]}</span>
     </div>
   );
 }
@@ -107,13 +107,13 @@ export function ReviewDialog({ slug, courseId, initial, trigger }: ReviewDialogP
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="sm">
-            <Star /> {initial ? "Editar reseña" : "Dejar reseña"}
+            <Star /> {initial ? "editar reseña" : "dejar reseña"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-heading">{initial ? "Edita tu reseña" : "¿Qué te está pareciendo el curso?"}</DialogTitle>
+          <DialogTitle>{initial ? "Edita tu reseña" : "¿Qué te está pareciendo el curso?"}</DialogTitle>
           <DialogDescription>Tu opinión ayuda a otros alumnos y al instructor a mejorar.</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} noValidate>
@@ -140,9 +140,9 @@ export function ReviewDialog({ slug, courseId, initial, trigger }: ReviewDialogP
           </FieldGroup>
           <DialogFooter className="mt-6">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              Cancelar
+              cancelar
             </Button>
-            <SubmitButton pending={mutation.isPending}>{initial ? "Guardar cambios" : "Publicar reseña"}</SubmitButton>
+            <SubmitButton pending={mutation.isPending}>{initial ? "guardar cambios" : "publicar reseña"}</SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

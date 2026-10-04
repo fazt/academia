@@ -29,10 +29,10 @@ export function UserMenu() {
     return (
       <div className="flex items-center gap-2">
         <Button variant="ghost" asChild className="hidden sm:inline-flex">
-          <Link href="/login">Iniciar sesión</Link>
+          <Link href="/login">iniciar sesión</Link>
         </Button>
         <Button asChild>
-          <Link href="/registro">Crear cuenta</Link>
+          <Link href="/registro">crear cuenta</Link>
         </Button>
       </div>
     );
@@ -49,35 +49,35 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="rounded-full focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none" aria-label="Menú de usuario">
+        <button className="rounded-full ring-1 ring-term-border transition-shadow hover:ring-term-border-strong focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none" aria-label="Menú de usuario">
           <UserAvatar name={user.name} image={user.image} />
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
+      <DropdownMenuContent align="end" className="w-60 font-term">
         <DropdownMenuLabel className="flex flex-col">
-          <span className="truncate font-semibold">{user.name}</span>
-          <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>
+          <span className="truncate font-sans text-sm font-semibold text-term-text">{user.name}</span>
+          <span className="truncate text-xs font-normal text-term-muted">{user.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link href="/mis-cursos">
-              <BookOpen /> Mis cursos
+              <BookOpen /> mis cursos
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/mis-compras">
-              <Receipt /> Mis compras
+              <Receipt /> mis compras
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/mis-certificados">
-              <GraduationCap /> Mis certificados
+              <GraduationCap /> mis certificados
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/perfil">
-              <UserRound /> Perfil
+              <UserRound /> perfil
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
@@ -86,14 +86,14 @@ export function UserMenu() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/admin">
-                <LayoutDashboard /> Administración
+                <LayoutDashboard /> administración
               </Link>
             </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
-          <LogOut /> Cerrar sesión
+          <LogOut /> cerrar sesión
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -7,6 +7,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Política de privacidad"
+      file="privacidad.md"
       updated="1 de octubre de 2026"
       sections={[
         {

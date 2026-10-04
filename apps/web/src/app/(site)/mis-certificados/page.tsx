@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Award, Download, ExternalLink, GraduationCap } from "lucide-react";
+import { Download, GraduationCap } from "lucide-react";
 import Link from "next/link";
-import { CourseCover } from "@/components/course/course-cover";
+import { CourseGrid } from "@/components/course/course-card";
 import { Container, PageHeader } from "@/components/layout/page-header";
+import { TermPanel } from "@/components/layout/term";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,26 +20,27 @@ export default function MyCertificatesPage() {
   const certificates = data?.items ?? [];
 
   return (
-    <Container className="space-y-8 py-10">
+    <Container className="flex flex-col gap-10 py-12">
       <PageHeader
+        command="ls certificados/"
         title="Mis certificados"
         description="Completa todas las clases de un curso para obtener su certificado."
       />
       {isLoading ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <CourseGrid>
           {Array.from({ length: 3 }, (_, i) => (
-            <Skeleton key={i} className="h-72 w-full rounded-xl" />
+            <Skeleton key={i} className="h-56 w-full rounded-[14px]" />
           ))}
-        </div>
+        </CourseGrid>
       ) : error ? (
-        <Empty className="border">
+        <Empty className="rounded-[14px] border border-term-border">
           <EmptyHeader>
             <EmptyTitle>No se pudieron cargar tus certificados</EmptyTitle>
             <EmptyDescription>{errorMessage(error)}</EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : certificates.length === 0 ? (
-        <Empty className="border border-dashed">
+        <Empty className="rounded-[14px] border border-dashed border-term-border-strong p-10">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <GraduationCap />
@@ -48,43 +50,47 @@ export default function MyCertificatesPage() {
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link href="/mis-cursos">Ir a mis cursos</Link>
+              <Link href="/mis-cursos">ir a mis cursos →</Link>
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <CourseGrid>
           {certificates.map((cert) => (
-            <article key={cert.code} className="flex flex-col overflow-hidden rounded-xl border bg-card">
-              <div className="relative">
-                <CourseCover title={cert.course.title} src={cert.course.coverImageUrl} />
-                <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-full bg-background/90 px-2.5 py-1 text-xs font-semibold shadow-sm backdrop-blur">
-                  <Award className="size-3.5 text-primary" /> Certificado
-                </span>
-              </div>
-              <div className="flex flex-1 flex-col gap-3 p-4">
-                <div className="space-y-1">
-                  <h2 className="line-clamp-2 font-heading leading-snug font-semibold">{cert.course.title}</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Emitido el {formatDate(cert.issuedAt)} · <span className="font-mono">{cert.code}</span>
-                  </p>
-                </div>
-                <div className="mt-auto flex flex-wrap gap-2">
+            <TermPanel
+              key={cert.code}
+              title={`certificados/${cert.code}`}
+              aside={<span className="shrink-0 text-term-ok">✓ verificable</span>}
+              className="flex flex-col"
+            >
+              {cert.course.coverImageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element -- portadas en Spaces/CDN con dominio configurable
+                <img
+                  src={cert.course.coverImageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="aspect-video w-full border-b border-term-border object-cover"
+                />
+              )}
+              <div className="flex flex-1 flex-col gap-3 p-6">
+                <h2 className="text-[21px] leading-snug font-semibold">{cert.course.title}</h2>
+                <p className="font-term text-[13px] text-term-muted">
+                  emitido el {formatDate(cert.issuedAt)} · <span className="text-term-text">{cert.code}</span>
+                </p>
+                <div className="mt-auto flex flex-wrap gap-2 pt-3">
                   <Button asChild size="sm" className="flex-1">
-                    <Link href={`/certificados/${cert.code}`}>
-                      <ExternalLink /> Ver
-                    </Link>
+                    <Link href={`/certificados/${cert.code}`}>ver certificado →</Link>
                   </Button>
                   <Button asChild size="sm" variant="outline" className="flex-1">
                     <a href={`/api/certificates/${cert.code}/pdf`} target="_blank" rel="noopener">
-                      <Download /> Descargar PDF
+                      <Download /> descargar pdf
                     </a>
                   </Button>
                 </div>
               </div>
-            </article>
+            </TermPanel>
           ))}
-        </div>
+        </CourseGrid>
       )}
     </Container>
   );

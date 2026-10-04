@@ -1,6 +1,6 @@
 import type { InferResponseType } from "hono/client";
 import Link from "next/link";
-import { SectionTitle, TermSection } from "@/components/landing/section-title";
+import { SectionTitle, TermSection } from "@/components/layout/term";
 import type { api } from "@/lib/api";
 
 type FeaturedReview = InferResponseType<typeof api.reviews.featured.$get, 200>["items"][number];

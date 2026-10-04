@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SectionTitle, TermSection } from "@/components/landing/section-title";
+import { SectionTitle, TermSection } from "@/components/layout/term";
 
 const QUESTIONS: { flag: string; question: string; answer: React.ReactNode }[] = [
   {

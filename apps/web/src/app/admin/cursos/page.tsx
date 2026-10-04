@@ -49,11 +49,12 @@ function CoursesTable() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Cursos"
+        command="ls cursos/"
         description="Crea cursos, organiza su currículo y publícalos."
         actions={
           <Button asChild>
             <Link href="/admin/cursos/nuevo">
-              <Plus /> Nuevo curso
+              <Plus /> nuevo curso
             </Link>
           </Button>
         }
@@ -149,9 +150,9 @@ function CoursesTable() {
                   <TableCell>
                     <CourseStatusBadge status={course.status} />
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatPrice(course.priceCents, course.currency)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatNumber(course.studentsCount)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(course.updatedAt)}</TableCell>
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">{formatPrice(course.priceCents, course.currency)}</TableCell>
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">{formatNumber(course.studentsCount)}</TableCell>
+                  <TableCell className="font-term text-[13px] text-muted-foreground">{formatDate(course.updatedAt)}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon-sm" asChild onClick={(e) => e.stopPropagation()}>
                       <Link href={`/admin/cursos/${course.id}`} aria-label={`Editar ${course.title}`}>

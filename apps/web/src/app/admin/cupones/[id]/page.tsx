@@ -17,13 +17,13 @@ export default function EditCouponPage() {
 
   if (coupon.isLoading) return <AdminPageSkeleton />;
   if (!coupon.data) {
-    return <NotFoundState error={coupon.error} title="Cupón no encontrado" backHref="/admin/cupones" backLabel="Volver a cupones" />;
+    return <NotFoundState error={coupon.error} title="Cupón no encontrado" backHref="/admin/cupones" backLabel="volver a cupones" />;
   }
 
   const data = coupon.data;
   return (
     <div className="space-y-6">
-      <AdminPageHeader title={`Cupón ${data.code}`} backHref="/admin/cupones" backLabel="Cupones" />
+      <AdminPageHeader title={`Cupón ${data.code}`} command={`vim cupones/${data.code}`} backHref="/admin/cupones" backLabel="Cupones" />
       <CouponForm
         couponId={id}
         redemptionsCount={data.redemptionsCount}

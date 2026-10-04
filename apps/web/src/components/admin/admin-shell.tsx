@@ -19,6 +19,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Logo } from "@/components/brand";
 import { openCommandPalette } from "@/components/command-palette";
+import { headerIconClass } from "@/components/layout/site-header";
 import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -31,40 +32,43 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   {
-    label: "General",
-    items: [{ href: "/admin", label: "Panel", icon: LayoutDashboard, exact: true }],
+    label: "general",
+    items: [{ href: "/admin", label: "panel", icon: LayoutDashboard, exact: true }],
   },
   {
-    label: "Catálogo",
+    label: "catálogo",
     items: [
-      { href: "/admin/cursos", label: "Cursos", icon: BookOpen },
-      { href: "/admin/categorias", label: "Categorías", icon: FolderTree },
-      { href: "/admin/cupones", label: "Cupones", icon: TicketPercent },
+      { href: "/admin/cursos", label: "cursos/", icon: BookOpen },
+      { href: "/admin/categorias", label: "categorías/", icon: FolderTree },
+      { href: "/admin/cupones", label: "cupones/", icon: TicketPercent },
     ],
   },
   {
-    label: "Ventas y alumnos",
+    label: "ventas y alumnos",
     items: [
-      { href: "/admin/ordenes", label: "Órdenes", icon: Receipt },
-      { href: "/admin/usuarios", label: "Usuarios", icon: Users },
+      { href: "/admin/ordenes", label: "órdenes/", icon: Receipt },
+      { href: "/admin/usuarios", label: "usuarios/", icon: Users },
     ],
   },
   {
-    label: "Comunidad",
+    label: "comunidad",
     items: [
-      { href: "/admin/resenas", label: "Reseñas", icon: Star },
-      { href: "/admin/comentarios", label: "Comentarios y preguntas", icon: MessagesSquare },
+      { href: "/admin/resenas", label: "reseñas/", icon: Star },
+      { href: "/admin/comentarios", label: "comentarios/", icon: MessagesSquare },
     ],
   },
 ];
 
+/** Navegación del panel, como la de la portada: monoespaciada, en minúsculas y con grupos comentados. */
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <nav className="flex flex-col gap-5" aria-label="Administración">
+    <nav className="flex flex-col gap-6 font-term" aria-label="Administración">
       {NAV.map((group) => (
-        <div key={group.label} className="space-y-1">
-          <p className="px-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">{group.label}</p>
+        <div key={group.label} className="flex flex-col gap-1">
+          <p className="px-3 pb-1 text-xs text-term-muted">
+            <span className="text-term-accent">#</span> {group.label}
+          </p>
           {group.items.map((item) => {
             const active =
               "exact" in item && item.exact ? pathname === item.href : pathname.startsWith(item.href);
@@ -75,10 +79,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none",
                   active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-[color-mix(in_oklch,var(--term-accent)_12%,transparent)] font-bold text-term-accent"
+                    : "text-term-muted hover:bg-term-surface hover:text-term-text",
                 )}
               >
                 <item.icon className="size-4" />
@@ -96,7 +100,7 @@ function SidebarFooter() {
   return (
     <Button variant="outline" size="sm" asChild className="w-full justify-start">
       <Link href="/">
-        <ExternalLink /> Ver la web
+        <ExternalLink /> ver la web
       </Link>
     </Button>
   );
@@ -127,7 +131,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link href="/">Volver al inicio</Link>
+              <Link href="/">volver al inicio</Link>
             </Button>
           </EmptyContent>
         </Empty>
@@ -136,10 +140,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-svh bg-muted/30">
-      <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col gap-6 border-r bg-background px-3 py-4 lg:flex">
-        <div className="px-2">
+    <div className="flex min-h-svh bg-term-bg">
+      <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col gap-7 border-r border-term-border bg-term-bg px-3 py-5 lg:flex">
+        <div className="flex items-baseline gap-2 px-3">
           <Logo href="/admin" />
+          <span className="font-term text-xs text-term-muted">admin</span>
         </div>
         <div className="flex-1 overflow-y-auto">
           <NavLinks />
@@ -148,8 +153,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-72 gap-0 p-0">
-          <SheetHeader className="border-b">
+        <SheetContent side="left" className="w-72 gap-0 border-term-border bg-term-bg p-0">
+          <SheetHeader className="border-b border-term-border">
             <SheetTitle>
               <Logo href="/admin" />
             </SheetTitle>
@@ -165,32 +170,41 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 sm:px-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
+        <header className="sticky top-0 z-30 flex h-[73px] items-center gap-2 border-b border-term-border bg-term-bg/85 px-5 font-term backdrop-blur supports-[backdrop-filter]:bg-term-bg/70 sm:px-10">
+          <button
+            type="button"
+            className={cn(headerIconClass, "-ml-2 lg:hidden")}
             onClick={() => setMobileOpen(true)}
             aria-label="Abrir menú"
           >
             <Menu />
-          </Button>
-          <span className="font-heading font-semibold lg:hidden">Administración</span>
-          <div className="ml-auto flex items-center gap-1">
-            <Button variant="outline" size="sm" className="hidden gap-2 text-muted-foreground sm:inline-flex" onClick={openCommandPalette}>
-              <Command /> Buscar
-              <kbd className="rounded border bg-muted px-1 font-mono text-[10px]">Ctrl K</kbd>
-            </Button>
-            <Button variant="ghost" size="icon" className="sm:hidden" onClick={openCommandPalette} aria-label="Paleta de comandos">
+          </button>
+          <span className="text-sm font-bold lg:hidden">admin/</span>
+          <div className="ml-auto flex items-center gap-1 text-sm">
+            <button
+              type="button"
+              onClick={openCommandPalette}
+              className="hidden h-10 w-64 items-center gap-2 rounded-lg border border-term-border bg-term-surface px-3 text-term-muted transition-colors hover:border-term-border-strong hover:text-term-text focus-visible:ring-2 focus-visible:ring-term-accent/40 focus-visible:outline-none sm:inline-flex"
+            >
+              <Command className="size-4" />
+              <span className="flex-1 text-left">buscar…</span>
+              <kbd className="rounded border border-term-border bg-term-raised px-1.5 text-[10px]">Ctrl K</kbd>
+            </button>
+            <button
+              type="button"
+              className={cn(headerIconClass, "sm:hidden")}
+              onClick={openCommandPalette}
+              aria-label="Paleta de comandos"
+            >
               <Command />
-            </Button>
-            <ThemeToggle />
+            </button>
+            <ThemeToggle className={headerIconClass} />
             <div className="ml-1">
               <UserMenu />
             </div>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:py-8">{children}</main>
+        <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-8 sm:px-10 lg:py-10">{children}</main>
       </div>
     </div>
   );

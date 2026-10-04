@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { TermSection } from "@/components/landing/section-title";
+import { TermSection } from "@/components/layout/term";
 
 export function FinalCta({ freeCourse }: { freeCourse: { title: string } | null }) {
   return (

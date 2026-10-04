@@ -72,10 +72,10 @@ export function ChapterVideo({
             <AlertTriangle className="size-3.5" /> {upload.error ?? "La subida falló"}
           </span>
           <Button size="xs" variant="outline" onClick={pickFile}>
-            <RefreshCw /> Reintentar
+            <RefreshCw /> reintentar
           </Button>
           <Button size="xs" variant="ghost" onClick={() => dismiss(chapter.id)}>
-            Cerrar
+            cerrar
           </Button>
         </div>
       );
@@ -83,8 +83,8 @@ export function ChapterVideo({
     return (
       <div className="flex w-full max-w-xs items-center gap-2">
         <div className="min-w-0 flex-1 space-y-1">
-          <div className="flex justify-between gap-2 text-xs text-muted-foreground">
-            <span className="truncate">{upload.phase === "preparing" ? "Preparando…" : upload.filename}</span>
+          <div className="flex justify-between gap-2 font-term text-xs text-term-muted">
+            <span className="truncate">{upload.phase === "preparing" ? "preparando…" : upload.filename}</span>
             <span className="tabular-nums">{upload.progress} %</span>
           </div>
           <Progress value={upload.progress} />
@@ -106,13 +106,13 @@ export function ChapterVideo({
       {fileInput}
       <VideoStatusBadge status={chapter.videoStatus} />
       {chapter.videoStatus === "ready" && (
-        <span className="text-xs text-muted-foreground tabular-nums">{formatClock(chapter.durationSec)}</span>
+        <span className="font-term text-xs text-term-muted tabular-nums">{formatClock(chapter.durationSec)}</span>
       )}
       {chapter.videoStatus === "processing" && <Spinner className="size-3.5 text-muted-foreground" />}
 
       {chapter.videoStatus === "ready" && (
         <Button size="xs" variant="ghost" onClick={() => setPreviewOpen(true)}>
-          <Play /> Ver
+          <Play /> ver
         </Button>
       )}
 
@@ -128,7 +128,7 @@ export function ChapterVideo({
             if (status === "uploading") toast.message("La subida quedó incompleta. Vuelve a subir el archivo.");
           }}
         >
-          {checking ? <Spinner /> : <RefreshCw />} Comprobar
+          {checking ? <Spinner /> : <RefreshCw />} comprobar
         </Button>
       )}
 
@@ -136,7 +136,7 @@ export function ChapterVideo({
         <TooltipTrigger asChild>
           <span tabIndex={streamConfigured ? -1 : 0}>
             <Button size="xs" variant="outline" disabled={!streamConfigured} onClick={pickFile}>
-              <Upload /> {chapter.videoStatus === "none" ? "Subir video" : "Reemplazar"}
+              <Upload /> {chapter.videoStatus === "none" ? "subir video" : "reemplazar"}
             </Button>
           </span>
         </TooltipTrigger>
@@ -148,7 +148,7 @@ export function ChapterVideo({
           destructive
           title="¿Quitar el video?"
           description="Se borrará el video de Cloudflare Stream. El capítulo quedará sin video."
-          confirmLabel="Quitar video"
+          confirmLabel="quitar video"
           onConfirm={removeVideo}
           trigger={
             <Button size="icon-xs" variant="ghost" aria-label="Quitar video">

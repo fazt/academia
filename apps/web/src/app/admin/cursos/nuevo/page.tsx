@@ -8,6 +8,7 @@ export default function NewCoursePage() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Nuevo curso"
+        command="touch cursos/nuevo"
         description="Empieza por la información básica. Después podrás añadir secciones, capítulos y videos."
         backHref="/admin/cursos"
         backLabel="Cursos"

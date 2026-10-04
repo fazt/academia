@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { AuthCard } from "@/components/auth/auth-card";
+import { AuthCard, authLinkClass } from "@/components/auth/auth-card";
 import { SubmitButton, TextField } from "@/components/form/fields";
 import { FieldGroup } from "@/components/ui/field";
 import { authClient } from "@/lib/auth-client";
@@ -36,20 +36,21 @@ export default function ForgotPasswordPage() {
   if (sentTo) {
     return (
       <AuthCard
+        file="forgot-password.sh"
         title="Revisa tu correo"
         footer={
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Volver a iniciar sesión
+          <Link href="/login" className={authLinkClass}>
+            ← volver a iniciar sesión
           </Link>
         }
       >
-        <div className="flex flex-col items-center gap-3 text-center text-sm text-muted-foreground">
-          <div className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
-            <MailCheck className="size-6" />
-          </div>
+        <div className="flex gap-3 text-sm text-term-muted">
+          <span className="grid size-10 shrink-0 place-items-center rounded-[10px] border border-term-border bg-term-raised text-term-accent">
+            <MailCheck className="size-5" />
+          </span>
           <p>
-            Si existe una cuenta con <strong className="text-foreground">{sentTo}</strong>, recibirás un enlace para
-            elegir una nueva contraseña. Caduca en 1 hora.
+            Si existe una cuenta con <strong className="font-term font-medium text-term-text">{sentTo}</strong>, recibirás
+            un enlace para elegir una nueva contraseña. Caduca en 1 hora.
           </p>
         </div>
       </AuthCard>
@@ -58,11 +59,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthCard
+      file="forgot-password.sh"
       title="¿Olvidaste tu contraseña?"
-      description="Te enviaremos un enlace para restablecerla"
+      description="Te enviaremos un enlace para restablecerla."
       footer={
-        <Link href="/login" className="font-medium text-primary hover:underline">
-          Volver a iniciar sesión
+        <Link href="/login" className={authLinkClass}>
+          ← volver a iniciar sesión
         </Link>
       }
     >
@@ -70,7 +72,7 @@ export default function ForgotPasswordPage() {
         <FieldGroup>
           <TextField control={form.control} name="email" label="Email" type="email" autoComplete="email" />
           <SubmitButton pending={form.formState.isSubmitting} className="w-full" size="lg">
-            Enviar enlace
+            enviar enlace
           </SubmitButton>
         </FieldGroup>
       </form>

@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 
 /** Pantalla completa para estudiar: sin la cabecera ni el pie del sitio. */
 export default function LearnLayout({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-svh flex-col bg-background">{children}</div>;
+  return <div className="flex min-h-svh flex-col bg-term-bg text-term-text">{children}</div>;
 }

@@ -103,10 +103,10 @@ export function ChapterDialog({
           </FieldGroup>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
+              cancelar
             </Button>
             <SubmitButton pending={form.formState.isSubmitting}>
-              {target?.mode === "edit" ? "Guardar" : "Crear capítulo"}
+              {target?.mode === "edit" ? "guardar" : "crear capítulo"}
             </SubmitButton>
           </DialogFooter>
         </form>

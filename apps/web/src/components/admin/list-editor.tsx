@@ -42,8 +42,13 @@ export function ListEditor({
       {value.length > 0 && (
         <ul className="space-y-1.5">
           {value.map((item, index) => (
-            <li key={`${index}-${item}`} className="flex items-center gap-1 rounded-lg border bg-muted/30 py-1 pr-1 pl-3 text-sm">
-              <span className="min-w-0 flex-1 break-words">{item}</span>
+            <li key={`${index}-${item}`} className="flex items-center gap-1 rounded-[10px] border border-term-border bg-term-bg py-1 pr-1 pl-3 text-sm">
+              <span className="min-w-0 flex-1 break-words">
+                <span className="mr-2 font-term text-term-accent" aria-hidden>
+                  ›
+                </span>
+                {item}
+              </span>
               <Button type="button" variant="ghost" size="icon-xs" disabled={index === 0} onClick={() => move(index, -1)} aria-label="Subir">
                 <ArrowUp />
               </Button>
@@ -88,7 +93,7 @@ export function ListEditor({
         />
         <InputGroupAddon align="inline-end">
           <InputGroupButton size="xs" onClick={add} disabled={!draft.trim() || value.length >= max}>
-            <Plus /> Añadir
+            <Plus /> añadir
           </InputGroupButton>
         </InputGroupAddon>
       </InputGroup>

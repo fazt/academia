@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { AuthCard } from "@/components/auth/auth-card";
+import { AuthCard, authLinkClass } from "@/components/auth/auth-card";
 import { type EnabledProviders, SocialSignIn } from "@/components/auth/social-sign-in";
 import { SubmitButton, TextField } from "@/components/form/fields";
 import { FieldGroup } from "@/components/ui/field";
@@ -43,13 +43,14 @@ export function RegisterForm({ providers }: { providers: EnabledProviders | null
 
   return (
     <AuthCard
+      file="registro.sh"
       title="Crea tu cuenta"
-      description="Empieza a aprender hoy mismo"
+      description="Empieza a aprender hoy mismo: solo necesitas un email."
       footer={
         <span>
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="font-medium text-primary hover:underline">
-            Inicia sesión
+          <Link href="/login" className={authLinkClass}>
+            inicia sesión →
           </Link>
         </span>
       }
@@ -68,15 +69,15 @@ export function RegisterForm({ providers }: { providers: EnabledProviders | null
             description="Mínimo 8 caracteres."
           />
           <SubmitButton pending={form.formState.isSubmitting} className="w-full" size="lg">
-            Crear cuenta
+            crear cuenta
           </SubmitButton>
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-term-muted">
             Al registrarte aceptas los{" "}
-            <Link href="/terminos" className="underline hover:text-foreground">
+            <Link href="/terminos" className="underline underline-offset-2 hover:text-term-text">
               términos
             </Link>{" "}
             y la{" "}
-            <Link href="/privacidad" className="underline hover:text-foreground">
+            <Link href="/privacidad" className="underline underline-offset-2 hover:text-term-text">
               política de privacidad
             </Link>
             .

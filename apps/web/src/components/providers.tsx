@@ -25,8 +25,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
       }),
   );
 
+  // Oscuro por defecto, como la portada; el selector de tema permite el claro o el del sistema.
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <CartProvider>

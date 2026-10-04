@@ -22,7 +22,7 @@ export function CopyLinkButton() {
         }
       }}
     >
-      {copied ? <Check /> : <Link2 />} Copiar enlace
+      {copied ? <Check /> : <Link2 />} copiar enlace
     </Button>
   );
 }

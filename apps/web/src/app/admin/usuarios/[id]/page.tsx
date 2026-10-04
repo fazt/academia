@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AdminPageHeader } from "@/components/admin/admin-page";
+import { AdminPageHeader, adminTableClass } from "@/components/admin/admin-page";
 import { AdminPageSkeleton } from "@/components/admin/admin-shell";
 import { OrderStatusBadge, StatusPill } from "@/components/admin/badges";
 import { ConfirmAction } from "@/components/admin/confirm-button";
@@ -25,6 +25,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { api, call, errorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { formatDate, formatDateTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export default function AdminUserDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -49,7 +50,7 @@ export default function AdminUserDetailPage() {
 
   if (user.isLoading) return <AdminPageSkeleton />;
   if (!user.data) {
-    return <NotFoundState error={user.error} title="Usuario no encontrado" backHref="/admin/usuarios" backLabel="Volver a usuarios" />;
+    return <NotFoundState error={user.error} title="Usuario no encontrado" backHref="/admin/usuarios" backLabel="volver a usuarios" />;
   }
 
   const data = user.data;
@@ -101,7 +102,7 @@ export default function AdminUserDetailPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader backHref="/admin/usuarios" backLabel="Usuarios" title="Ficha de usuario" />
+      <AdminPageHeader backHref="/admin/usuarios" backLabel="Usuarios" title="Ficha de usuario" command={`cat usuarios/${id.slice(0, 8)}`} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
         <Card>
@@ -109,14 +110,14 @@ export default function AdminUserDetailPage() {
             <UserAvatar name={data.name} image={data.image} className="size-16 text-lg" />
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-heading text-xl font-bold">{data.name}</h2>
+                <h2 className="font-term text-xl font-extrabold tracking-[-0.01em]">{data.name}</h2>
                 {data.role === "admin" ? <StatusPill tone="primary">Administrador</StatusPill> : <StatusPill>Alumno</StatusPill>}
                 {!data.emailVerified && <StatusPill tone="warning">Email sin verificar</StatusPill>}
               </div>
               <CopyEmail email={data.email} className="text-sm text-muted-foreground" />
               {data.headline && <p className="text-sm">{data.headline}</p>}
               {data.bio && <p className="text-sm whitespace-pre-line text-muted-foreground">{data.bio}</p>}
-              <p className="text-xs text-muted-foreground">Registrado el {formatDate(data.createdAt)}</p>
+              <p className="font-term text-xs text-muted-foreground">registrado el {formatDate(data.createdAt)}</p>
             </div>
           </CardContent>
         </Card>
@@ -145,7 +146,7 @@ export default function AdminUserDetailPage() {
           </CardContent>
           <CardFooter className="justify-end border-t">
             <Button onClick={saveRole} disabled={isSelf || selectedRole === data.role || savingRole}>
-              {savingRole && <Spinner />} Guardar rol
+              {savingRole && <Spinner />} guardar rol
             </Button>
           </CardFooter>
         </Card>
@@ -173,35 +174,35 @@ export default function AdminUserDetailPage() {
               </SelectContent>
             </Select>
             <Button onClick={grant} disabled={!grantCourseId || granting} variant="outline">
-              {granting ? <Spinner /> : <Plus />} Dar acceso
+              {granting ? <Spinner /> : <Plus />} dar acceso
             </Button>
           </div>
           {data.enrollments.length === 0 ? (
-            <p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">
+            <p className="rounded-[10px] border border-dashed border-term-border-strong py-6 text-center text-sm text-muted-foreground">
               No está inscrito en ningún curso.
             </p>
           ) : (
-            <ul className="divide-y rounded-lg border">
+            <ul className="divide-y divide-term-border overflow-hidden rounded-[10px] border border-term-border">
               {data.enrollments.map((enrollment) => (
-                <li key={enrollment.courseId} className="flex items-center gap-3 px-3 py-2.5 text-sm">
+                <li key={enrollment.courseId} className="flex items-center gap-3 bg-term-bg/40 px-3 py-2.5 text-sm">
                   <BookOpen className="size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0 flex-1">
                     <Link href={`/admin/cursos/${enrollment.courseId}`} className="truncate font-medium hover:text-primary">
                       {enrollment.title}
                     </Link>
-                    <p className="text-xs text-muted-foreground">
-                      Desde el {formatDate(enrollment.enrolledAt)} · {enrollment.orderId ? "Compra" : "Acceso manual o gratuito"}
+                    <p className="font-term text-xs text-muted-foreground">
+                      desde el {formatDate(enrollment.enrolledAt)} · {enrollment.orderId ? "compra" : "acceso manual o gratuito"}
                     </p>
                   </div>
                   <ConfirmAction
                     destructive
                     title="¿Revocar el acceso?"
                     description={`${data.name} dejará de ver «${enrollment.title}». Si lo compró, considera reembolsar la orden.`}
-                    confirmLabel="Revocar"
+                    confirmLabel="revocar"
                     onConfirm={() => revoke(enrollment.courseId)}
                     trigger={
                       <Button size="sm" variant="ghost">
-                        <Trash2 /> Revocar
+                        <Trash2 /> revocar
                       </Button>
                     }
                   />
@@ -212,7 +213,7 @@ export default function AdminUserDetailPage() {
         </CardContent>
       </Card>
 
-      <Card className="gap-0 pb-0">
+      <Card className={cn("gap-0 pb-0", adminTableClass)}>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2">
             <Receipt className="size-4" /> Órdenes ({data.orders.length})
@@ -220,7 +221,7 @@ export default function AdminUserDetailPage() {
         </CardHeader>
         {data.orders.length === 0 ? (
           <CardContent className="pb-6">
-            <p className="rounded-lg border border-dashed py-6 text-center text-sm text-muted-foreground">Sin órdenes.</p>
+            <p className="rounded-[10px] border border-dashed border-term-border-strong py-6 text-center text-sm text-muted-foreground">Sin órdenes.</p>
           </CardContent>
         ) : (
           <Table>
@@ -235,7 +236,7 @@ export default function AdminUserDetailPage() {
             <TableBody>
               {data.orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="pl-6 font-mono text-xs">
+                  <TableCell className="pl-6 font-term text-[13px] text-term-num">
                     <Link href={`/admin/ordenes/${order.id}`} className="hover:text-primary">
                       #{order.id.slice(0, 8).toUpperCase()}
                     </Link>
@@ -243,8 +244,8 @@ export default function AdminUserDetailPage() {
                   <TableCell>
                     <OrderStatusBadge status={order.status} />
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{money(order.totalCents, order.currency)}</TableCell>
-                  <TableCell className="pr-6 text-muted-foreground">{formatDateTime(order.createdAt)}</TableCell>
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">{money(order.totalCents, order.currency)}</TableCell>
+                  <TableCell className="pr-6 font-term text-[13px] text-muted-foreground">{formatDateTime(order.createdAt)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

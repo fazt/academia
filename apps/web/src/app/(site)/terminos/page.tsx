@@ -7,6 +7,7 @@ export default function TermsPage() {
   return (
     <LegalPage
       title="Términos y condiciones"
+      file="terminos.md"
       updated="1 de octubre de 2026"
       sections={[
         {

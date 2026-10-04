@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
-import { AuthCard } from "@/components/auth/auth-card";
+import { AuthCard, authLinkClass } from "@/components/auth/auth-card";
 import { type EnabledProviders, SocialSignIn } from "@/components/auth/social-sign-in";
 import { SubmitButton, TextField } from "@/components/form/fields";
 import { Button } from "@/components/ui/button";
@@ -63,37 +63,38 @@ export function LoginForm({ providers }: { providers: EnabledProviders | null })
 
   return (
     <AuthCard
+      file="login.sh"
       title="Bienvenido de nuevo"
-      description="Inicia sesión para continuar aprendiendo"
+      description="Inicia sesión para continuar aprendiendo."
       footer={
         <span>
           ¿No tienes cuenta?{" "}
-          <Link href={`/registro${params.get("redirect") ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`} className="font-medium text-primary hover:underline">
-            Crea una gratis
+          <Link href={`/registro${params.get("redirect") ? `?redirect=${encodeURIComponent(redirectTo)}` : ""}`} className={authLinkClass}>
+            crea una gratis →
           </Link>
         </span>
       }
     >
       {oauthError === "email_not_verified" ? (
-        <div role="status" className="mb-4 flex gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-          <MailWarning className="mt-0.5 size-4 shrink-0 text-amber-600" />
+        <div role="status" className="flex gap-3 rounded-[10px] border border-term-num/30 bg-term-num/10 p-3 text-sm">
+          <MailWarning className="mt-0.5 size-4 shrink-0 text-term-num" />
           <p>{oauthErrorMessage(oauthError)}</p>
         </div>
       ) : (
         oauthError && (
-          <div role="alert" className="mb-4 flex gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm">
+          <div role="alert" className="flex gap-3 rounded-[10px] border border-destructive/30 bg-destructive/10 p-3 text-sm">
             <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
             <p>{oauthErrorMessage(oauthError)}</p>
           </div>
         )
       )}
       {unverifiedEmail && (
-        <div className="mb-4 flex gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-sm">
-          <MailWarning className="mt-0.5 size-4 shrink-0 text-amber-600" />
+        <div className="flex gap-3 rounded-[10px] border border-term-num/30 bg-term-num/10 p-3 text-sm">
+          <MailWarning className="mt-0.5 size-4 shrink-0 text-term-num" />
           <div className="space-y-2">
             <p>Confirma tu email para entrar. Revisa tu bandeja de entrada (y la de spam).</p>
             <Button size="sm" variant="outline" onClick={resend} disabled={resending}>
-              Reenviar enlace
+              reenviar enlace
             </Button>
           </div>
         </div>
@@ -111,13 +112,13 @@ export function LoginForm({ providers }: { providers: EnabledProviders | null })
               autoComplete="current-password"
             />
             <div className="text-right">
-              <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary hover:underline">
+              <Link href="/forgot-password" className="text-sm text-term-muted underline-offset-4 hover:text-term-text hover:underline">
                 ¿Olvidaste tu contraseña?
               </Link>
             </div>
           </div>
           <SubmitButton pending={form.formState.isSubmitting} className="w-full" size="lg">
-            Iniciar sesión
+            iniciar sesión
           </SubmitButton>
         </FieldGroup>
       </form>

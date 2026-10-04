@@ -45,7 +45,7 @@ function UsersTable() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Usuarios" description="Alumnos y administradores de la plataforma." />
+      <AdminPageHeader title="Usuarios" command="ls usuarios/" description="Alumnos y administradores de la plataforma." />
       <TableCard
         toolbar={
           <TableToolbar table={table} placeholder="Buscar por nombre o email…">
@@ -123,8 +123,8 @@ function UsersTable() {
                       </StatusPill>
                     )}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{formatNumber(user.coursesCount)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">{formatNumber(user.coursesCount)}</TableCell>
+                  <TableCell className="font-term text-[13px] text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
                   <TableCell>
                     <ChevronRight className="size-4 text-muted-foreground" />
                   </TableCell>

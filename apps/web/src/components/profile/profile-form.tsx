@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { SubmitButton, TextareaField, TextField } from "@/components/form/fields";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ProfileSection } from "@/components/profile/profile-section";
 import { FieldGroup } from "@/components/ui/field";
 import { api, call, errorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -31,41 +31,41 @@ export function ProfileForm({ initial, email }: { initial: ProfileInput; email: 
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="font-heading">Información personal</CardTitle>
-        <CardDescription>Tu nombre aparece en tus comentarios, reseñas y certificados.</CardDescription>
-      </CardHeader>
-      <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} noValidate>
-        <CardContent>
-          <FieldGroup>
-            <TextField control={form.control} name="name" label="Nombre completo" autoComplete="name" />
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Email</p>
-              <p className="rounded-lg border bg-muted/40 px-2.5 py-1.5 text-sm text-muted-foreground">{email}</p>
-            </div>
-            <TextField
-              control={form.control}
-              name="headline"
-              label="Titular"
-              placeholder="Ej.: Desarrolladora frontend"
-              description="Una frase corta sobre ti (opcional)."
-            />
-            <TextareaField
-              control={form.control}
-              name="bio"
-              label="Biografía"
-              rows={4}
-              placeholder="Cuéntanos algo sobre ti (opcional)"
-            />
-          </FieldGroup>
-        </CardContent>
-        <CardFooter className="mt-6 justify-end">
+    <form onSubmit={form.handleSubmit((values) => mutation.mutate(values))} noValidate>
+      <ProfileSection
+        file="perfil.json"
+        title="Información personal"
+        description="Tu nombre aparece en tus comentarios, reseñas y certificados."
+        footer={
           <SubmitButton pending={mutation.isPending} disabled={!form.formState.isDirty}>
-            Guardar cambios
+            guardar cambios
           </SubmitButton>
-        </CardFooter>
-      </form>
-    </Card>
+        }
+      >
+        <FieldGroup>
+          <TextField control={form.control} name="name" label="Nombre completo" autoComplete="name" />
+          <div className="space-y-1.5">
+            <p className="text-sm font-medium">Email</p>
+            <p className="rounded-lg border border-term-border bg-term-raised px-2.5 py-1.5 font-term text-[13px] text-term-muted">
+              {email}
+            </p>
+          </div>
+          <TextField
+            control={form.control}
+            name="headline"
+            label="Titular"
+            placeholder="Ej.: Desarrolladora frontend"
+            description="Una frase corta sobre ti (opcional)."
+          />
+          <TextareaField
+            control={form.control}
+            name="bio"
+            label="Biografía"
+            rows={4}
+            placeholder="Cuéntanos algo sobre ti (opcional)"
+          />
+        </FieldGroup>
+      </ProfileSection>
+    </form>
   );
 }

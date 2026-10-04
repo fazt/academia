@@ -7,6 +7,7 @@ export default function RefundsPage() {
   return (
     <LegalPage
       title="Política de reembolsos"
+      file="reembolsos.md"
       updated="1 de octubre de 2026"
       sections={[
         {

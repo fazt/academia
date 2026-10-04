@@ -35,36 +35,39 @@ export default function ProfilePage() {
   const hasPassword = accounts.data?.some((a) => a.providerId === "credential") ?? true;
 
   return (
-    <Container className="max-w-3xl space-y-8 py-10">
+    <Container className="flex flex-col gap-10 py-12">
       <PageHeader
+        command="whoami"
         title="Perfil"
         description={profile ? `Miembro desde ${formatDate(profile.createdAt)}` : "Gestiona tu cuenta."}
       />
-      {isLoading || accounts.isLoading ? (
-        <div className="space-y-6">
-          <Skeleton className="h-36 w-full rounded-xl" />
-          <Skeleton className="h-96 w-full rounded-xl" />
-          <Skeleton className="h-80 w-full rounded-xl" />
-        </div>
-      ) : error || !profile ? (
-        <Empty className="border">
-          <EmptyHeader>
-            <EmptyTitle>No se pudo cargar tu perfil</EmptyTitle>
-            <EmptyDescription>{errorMessage(error)}</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      ) : (
-        <div className="space-y-6">
-          <AvatarUploader name={profile.name} image={profile.image} />
-          <ProfileForm
-            key={profile.id}
-            email={profile.email}
-            initial={{ name: profile.name, headline: profile.headline, bio: profile.bio }}
-          />
-          {accounts.data && <ConnectedAccounts accounts={accounts.data} enabled={providers.data ?? null} />}
-          <PasswordForm hasPassword={hasPassword} email={profile.email} />
-        </div>
-      )}
+      <div className="max-w-[860px]">
+        {isLoading || accounts.isLoading ? (
+          <div className="flex flex-col gap-6">
+            <Skeleton className="h-40 w-full rounded-[14px]" />
+            <Skeleton className="h-96 w-full rounded-[14px]" />
+            <Skeleton className="h-80 w-full rounded-[14px]" />
+          </div>
+        ) : error || !profile ? (
+          <Empty className="rounded-[14px] border border-term-border">
+            <EmptyHeader>
+              <EmptyTitle>No se pudo cargar tu perfil</EmptyTitle>
+              <EmptyDescription>{errorMessage(error)}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <div className="flex flex-col gap-6">
+            <AvatarUploader name={profile.name} image={profile.image} />
+            <ProfileForm
+              key={profile.id}
+              email={profile.email}
+              initial={{ name: profile.name, headline: profile.headline, bio: profile.bio }}
+            />
+            {accounts.data && <ConnectedAccounts accounts={accounts.data} enabled={providers.data ?? null} />}
+            <PasswordForm hasPassword={hasPassword} email={profile.email} />
+          </div>
+        )}
+      </div>
     </Container>
   );
 }

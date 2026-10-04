@@ -132,7 +132,7 @@ export function CourseForm({ courseId, initial }: { courseId?: string; initial?:
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="slug">Slug (URL)</FieldLabel>
-                    <InputGroup>
+                    <InputGroup className="font-term">
                       <InputGroupAddon>
                         <InputGroupText>/cursos/</InputGroupText>
                       </InputGroupAddon>
@@ -356,7 +356,7 @@ export function CourseForm({ courseId, initial }: { courseId?: string; initial?:
 
         <div className="flex justify-end gap-2 lg:sticky lg:bottom-4">
           <SubmitButton pending={form.formState.isSubmitting} className="w-full" size="lg">
-            {isEdit ? "Guardar cambios" : "Crear curso"}
+            {isEdit ? "guardar cambios" : "crear curso"}
           </SubmitButton>
         </div>
       </div>

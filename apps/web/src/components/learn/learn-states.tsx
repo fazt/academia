@@ -3,6 +3,7 @@
 import { BookX, Lock, RefreshCw, SearchX } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/brand";
+import { Prompt } from "@/components/layout/term";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +12,7 @@ import { ApiError, errorMessage } from "@/lib/api";
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex h-14 items-center border-b px-4">
+      <header className="flex h-14 items-center border-b border-term-border px-5">
         <Logo />
       </header>
       <div className="flex flex-1 items-center justify-center p-6">{children}</div>
@@ -19,14 +20,17 @@ function Shell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const panelClass = "max-w-md rounded-[14px] border border-solid border-term-border bg-term-surface";
+
 export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug: string; onRetry?: () => void }) {
   const status = error instanceof ApiError ? error.status : 0;
 
   if (status === 403) {
     return (
       <Shell>
-        <Empty className="max-w-md border">
+        <Empty className={panelClass}>
           <EmptyHeader>
+            <Prompt className="mb-2">aprender {slug}</Prompt>
             <EmptyMedia variant="icon">
               <Lock />
             </EmptyMedia>
@@ -35,10 +39,10 @@ export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug
           </EmptyHeader>
           <EmptyContent className="flex-row justify-center">
             <Button asChild>
-              <Link href={`/cursos/${slug}`}>Ver el curso</Link>
+              <Link href={`/cursos/${slug}`}>ver el curso →</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/mis-cursos">Mis cursos</Link>
+              <Link href="/mis-cursos">mis cursos</Link>
             </Button>
           </EmptyContent>
         </Empty>
@@ -49,8 +53,9 @@ export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug
   if (status === 404) {
     return (
       <Shell>
-        <Empty className="max-w-md border">
+        <Empty className={panelClass}>
           <EmptyHeader>
+            <Prompt className="mb-2">aprender {slug}</Prompt>
             <EmptyMedia variant="icon">
               <SearchX />
             </EmptyMedia>
@@ -59,7 +64,7 @@ export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug
           </EmptyHeader>
           <EmptyContent>
             <Button asChild>
-              <Link href="/mis-cursos">Ir a mis cursos</Link>
+              <Link href="/mis-cursos">ir a mis cursos →</Link>
             </Button>
           </EmptyContent>
         </Empty>
@@ -69,8 +74,9 @@ export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug
 
   return (
     <Shell>
-      <Empty className="max-w-md border">
+      <Empty className={panelClass}>
         <EmptyHeader>
+          <Prompt className="mb-2">aprender {slug}</Prompt>
           <EmptyMedia variant="icon">
             <BookX />
           </EmptyMedia>
@@ -80,7 +86,7 @@ export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug
         {onRetry && (
           <EmptyContent>
             <Button variant="outline" onClick={onRetry}>
-              <RefreshCw /> Reintentar
+              <RefreshCw /> reintentar
             </Button>
           </EmptyContent>
         )}
@@ -92,8 +98,9 @@ export function LearnErrorState({ error, slug, onRetry }: { error: unknown; slug
 export function LearnEmptyCourse({ slug }: { slug: string }) {
   return (
     <Shell>
-      <Empty className="max-w-md border">
+      <Empty className={panelClass}>
         <EmptyHeader>
+          <Prompt className="mb-2">ls {slug}/</Prompt>
           <EmptyMedia variant="icon">
             <BookX />
           </EmptyMedia>
@@ -102,10 +109,10 @@ export function LearnEmptyCourse({ slug }: { slug: string }) {
         </EmptyHeader>
         <EmptyContent className="flex-row justify-center">
           <Button variant="outline" asChild>
-            <Link href={`/cursos/${slug}`}>Ver el curso</Link>
+            <Link href={`/cursos/${slug}`}>ver el curso</Link>
           </Button>
           <Button asChild>
-            <Link href="/mis-cursos">Mis cursos</Link>
+            <Link href="/mis-cursos">mis cursos →</Link>
           </Button>
         </EmptyContent>
       </Empty>
@@ -116,19 +123,22 @@ export function LearnEmptyCourse({ slug }: { slug: string }) {
 export function LearnSkeleton() {
   return (
     <div className="flex flex-1 flex-col">
-      <div className="flex h-14 items-center gap-4 border-b px-4">
-        <Skeleton className="h-8 w-28" />
+      <div className="flex h-14 items-center gap-4 border-b border-term-border px-5">
+        <Skeleton className="h-6 w-28" />
         <Skeleton className="h-4 w-64" />
       </div>
       <div className="flex flex-1">
         <div className="flex-1 space-y-4">
-          <Skeleton className="aspect-video w-full rounded-none" />
-          <div className="space-y-3 px-6">
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-4 w-1/3" />
+          <div className="dark bg-term-screen">
+            <Skeleton className="aspect-video w-full rounded-none" />
+          </div>
+          <div className="space-y-3 px-5 sm:px-8">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-7 w-1/2" />
+            <Skeleton className="h-4 w-24" />
           </div>
         </div>
-        <div className="hidden w-96 space-y-3 border-l p-4 lg:block">
+        <div className="hidden w-96 space-y-3 border-l border-term-border bg-term-surface p-4 lg:block">
           {Array.from({ length: 8 }, (_, i) => (
             <Skeleton key={i} className="h-10 w-full" />
           ))}

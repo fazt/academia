@@ -20,8 +20,8 @@ function ClassroomMockup({ course }: { course: CourseDetail }) {
 
   return (
     <div className="relative" aria-hidden>
-      <div className="overflow-hidden rounded-2xl border border-term-border bg-term-surface shadow-[0_40px_80px_-40px_rgba(0,0,0,0.8)]">
-        <div className="relative grid aspect-video place-items-center bg-[#060807]">
+      <div className="overflow-hidden rounded-2xl border border-term-border bg-term-surface shadow-[0_40px_80px_-40px_rgba(0,0,0,0.25)] dark:shadow-[0_40px_80px_-40px_rgba(0,0,0,0.8)]">
+        <div className="dark relative grid aspect-video place-items-center bg-term-screen">
           <span className="absolute top-4 left-[18px] font-term text-xs text-term-muted">
             {course.slug} / sección 1
           </span>
@@ -52,7 +52,7 @@ function ClassroomMockup({ course }: { course: CourseDetail }) {
                 key={chapter.id}
                 className={cn(
                   "flex items-center gap-3 rounded-[10px] px-2.5 py-2.5 text-sm",
-                  isCurrent && "bg-[color-mix(in_oklch,var(--color-term-accent)_12%,var(--color-term-surface))] font-semibold",
+                  isCurrent && "bg-[color-mix(in_oklch,var(--term-accent)_12%,var(--term-surface))] font-semibold",
                 )}
               >
                 {isDone ? (
@@ -76,7 +76,7 @@ function ClassroomMockup({ course }: { course: CourseDetail }) {
           })}
         </div>
       </div>
-      <div className="absolute -bottom-24 -left-7 hidden w-[280px] flex-col gap-2 rounded-[14px] border border-[#2f3531] bg-term-raised px-4 py-3.5 text-[13px] shadow-[0_24px_48px_-24px_rgba(0,0,0,0.9)] sm:flex">
+      <div className="absolute -bottom-24 -left-7 hidden w-[280px] flex-col gap-2 rounded-[14px] border border-[color-mix(in_oklch,var(--term-border),var(--term-border-strong))] bg-term-raised px-4 py-3.5 text-[13px] shadow-[0_24px_48px_-24px_rgba(0,0,0,0.3)] sm:flex dark:shadow-[0_24px_48px_-24px_rgba(0,0,0,0.9)]">
         <span className="font-term text-xs text-term-muted">preguntas/clase-3</span>
         <span className="font-semibold">¿Dónde descargo el código de esta clase?</span>
         <span className="flex items-center gap-2">
@@ -105,7 +105,7 @@ export function Hero({ featured, students, freeCourse }: HeroProps) {
   return (
     <section className="mx-auto grid max-w-[1200px] items-center gap-14 px-5 pt-16 pb-24 sm:px-10 lg:grid-cols-2 lg:pt-[72px] lg:pb-36">
       <div className="flex flex-col items-start gap-6">
-        <span className="inline-flex items-center gap-2 rounded-full border border-[#2f3531] bg-term-surface px-3 py-1.5 font-term text-xs text-term-muted">
+        <span className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklch,var(--term-border),var(--term-border-strong))] bg-term-surface px-3 py-1.5 font-term text-xs text-term-muted">
           <span className="size-[7px] rounded-full bg-term-ok" />
           Cursos en video · acceso de por vida
         </span>

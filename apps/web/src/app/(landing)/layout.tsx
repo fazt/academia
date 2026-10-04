@@ -1,26 +1,13 @@
-import { Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
-import { LandingFooter } from "@/components/landing/landing-footer";
-import { LandingHeader } from "@/components/landing/landing-header";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 
-const mono = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["400", "500", "700", "800"],
-});
-const sans = Hanken_Grotesk({ variable: "--font-hanken", subsets: ["latin"] });
-
-/**
- * La portada usa la dirección visual "Terminal": siempre oscura (clase `dark`
- * para que los componentes de shadcn que contiene usen sus tokens oscuros).
- */
+/** La portada comparte cabecera, pie, tema y fuentes con el resto del sitio (dirección "Terminal"). */
 export default function LandingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className={`dark ${mono.variable} ${sans.variable} flex min-h-svh flex-1 flex-col bg-term-bg font-term-sans text-term-text [color-scheme:dark]`}
-    >
-      <LandingHeader />
+    <>
+      <SiteHeader />
       <main className="flex-1">{children}</main>
-      <LandingFooter />
-    </div>
+      <SiteFooter />
+    </>
   );
 }

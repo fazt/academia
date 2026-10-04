@@ -37,13 +37,19 @@ export function ReviewsSection({
 
   return (
     <section>
-      <h2 className="mb-4 flex items-center gap-2 font-heading text-2xl font-bold">
-        <Star className="size-6 fill-star text-star" />
-        {ratingCount > 0 ? `${ratingAvg.toFixed(1)} · ${ratingCount} ${ratingCount === 1 ? "reseña" : "reseñas"}` : "Reseñas"}
+      <h2 className="mb-1 font-term text-2xl font-extrabold tracking-[-0.02em]">
+        <span aria-hidden className="text-term-accent">#</span> Reseñas
       </h2>
+      {ratingCount > 0 && (
+        <p className="mb-4 inline-flex items-center gap-1.5 font-term text-[13px] text-term-muted">
+          <Star aria-hidden className="size-3.5 fill-current text-term-num" strokeWidth={0} />
+          <span className="font-bold text-term-num">{ratingAvg.toFixed(1)}</span>
+          <span className="sr-only"> de 5 estrellas</span>· {ratingCount} {ratingCount === 1 ? "reseña" : "reseñas"}
+        </p>
+      )}
 
       {ratingCount === 0 ? (
-        <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
+        <p className="mt-4 rounded-[14px] border border-dashed border-term-border-strong p-6 text-center text-sm text-term-muted">
           Este curso aún no tiene reseñas. Los estudiantes inscritos pueden dejar la suya desde el aula.
         </p>
       ) : (
@@ -52,34 +58,36 @@ export function ReviewsSection({
             {distribution.map((row) => {
               const pct = ratingCount ? Math.round((row.count / ratingCount) * 100) : 0;
               return (
-                <div key={row.stars} className="flex items-center gap-2 text-sm">
+                <div key={row.stars} className="flex items-center gap-2 font-term text-[13px]">
                   <span className="w-3 tabular-nums">{row.stars}</span>
-                  <Star className="size-3.5 fill-star text-star" />
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-star" style={{ width: `${pct}%` }} />
+                  <Star aria-hidden className="size-3.5 fill-current text-term-num" strokeWidth={0} />
+                  <div className="h-1.5 flex-1 overflow-hidden rounded bg-term-raised">
+                    <div className="h-full rounded bg-term-num" style={{ width: `${pct}%` }} />
                   </div>
-                  <span className="w-9 text-right text-xs text-muted-foreground tabular-nums">{pct}%</span>
+                  <span className="w-9 text-right text-xs text-term-muted tabular-nums">{pct}%</span>
                 </div>
               );
             })}
           </div>
-          <div className="space-y-5">
-            {items.map((review) => (
-              <article key={review.id} className="flex gap-3 border-b pb-5 last:border-0">
-                <UserAvatar name={review.author.name} image={review.author.image} className="size-9" />
-                <div className="min-w-0 space-y-1">
-                  <p className="text-sm font-semibold">{review.author.name}</p>
-                  <div className="flex items-center gap-2">
-                    <RatingStars value={review.rating} />
-                    <span className="text-xs text-muted-foreground">{formatRelative(review.createdAt)}</span>
+          <div className="min-w-0 space-y-4">
+            <div className="flex flex-col rounded-[14px] border border-term-border bg-term-surface">
+              {items.map((review) => (
+                <article key={review.id} className="flex gap-3 border-b border-term-border px-5 py-5 last:border-b-0">
+                  <UserAvatar name={review.author.name} image={review.author.image} className="size-9" />
+                  <div className="min-w-0 space-y-1.5">
+                    <p className="text-sm font-semibold">{review.author.name}</p>
+                    <div className="flex items-center gap-2">
+                      <RatingStars value={review.rating} />
+                      <span className="font-term text-xs text-term-muted">{formatRelative(review.createdAt)}</span>
+                    </div>
+                    {review.body && <p className="text-sm whitespace-pre-line text-term-text/90">{review.body}</p>}
                   </div>
-                  {review.body && <p className="text-sm whitespace-pre-line text-foreground/90">{review.body}</p>}
-                </div>
-              </article>
-            ))}
+                </article>
+              ))}
+            </div>
             {reviews.hasNextPage && (
               <Button variant="outline" onClick={() => reviews.fetchNextPage()} disabled={reviews.isFetchingNextPage}>
-                {reviews.isFetchingNextPage && <Spinner />} Ver más reseñas
+                {reviews.isFetchingNextPage && <Spinner />} ver más reseñas
               </Button>
             )}
           </div>

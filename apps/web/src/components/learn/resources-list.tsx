@@ -3,6 +3,7 @@
 import { Download, File, FileArchive, FileCode, FileImage, FileText, FolderOpen } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { TermPanel } from "@/components/layout/term";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
@@ -23,7 +24,7 @@ export function ResourcesList({ chapterId, resources }: { chapterId: string; res
 
   if (resources.length === 0) {
     return (
-      <Empty className="border border-dashed py-10">
+      <Empty className="rounded-[14px] border border-dashed border-term-border-strong py-10">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <FolderOpen />
@@ -57,32 +58,43 @@ export function ResourcesList({ chapterId, resources }: { chapterId: string; res
     }
   };
 
+  // Lista de archivos, como un `ls -lh` de la carpeta de la clase.
   return (
-    <ul className="divide-y rounded-xl border bg-card">
-      {resources.map((resource) => {
-        const Icon = iconFor(resource.mimeType, resource.name);
-        return (
-          <li key={resource.id} className="flex items-center gap-3 px-4 py-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-              <Icon className="size-4" />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{resource.name}</p>
-              <p className="text-xs text-muted-foreground">{formatBytes(resource.sizeBytes)}</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={downloading === resource.id}
-              onClick={() => download(resource)}
-              aria-label={`Descargar ${resource.name}`}
+    <TermPanel
+      title="recursos/"
+      aside={
+        <span className="shrink-0">
+          {resources.length} {resources.length === 1 ? "archivo" : "archivos"}
+        </span>
+      }
+    >
+      <ul>
+        {resources.map((resource) => {
+          const Icon = iconFor(resource.mimeType, resource.name);
+          return (
+            <li
+              key={resource.id}
+              className="flex items-center gap-3 border-b border-term-border px-4 py-3 transition-colors last:border-b-0 hover:bg-term-raised"
             >
-              {downloading === resource.id ? <Spinner /> : <Download />}
-              <span className="hidden sm:inline">Descargar</span>
-            </Button>
-          </li>
-        );
-      })}
-    </ul>
+              <Icon className="size-4 shrink-0 text-term-muted" aria-hidden />
+              <p className="min-w-0 flex-1 truncate font-term text-sm">{resource.name}</p>
+              <span className="shrink-0 font-term text-xs text-term-muted tabular-nums">
+                {formatBytes(resource.sizeBytes)}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={downloading === resource.id}
+                onClick={() => download(resource)}
+                aria-label={`Descargar ${resource.name}`}
+              >
+                {downloading === resource.id ? <Spinner /> : <Download />}
+                <span className="hidden sm:inline">descargar</span>
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+    </TermPanel>
   );
 }

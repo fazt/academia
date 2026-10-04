@@ -23,8 +23,10 @@ interface StreamPlayerProps {
 
 function Overlay({ icon, title, children }: { icon: React.ReactNode; title: string; children?: React.ReactNode }) {
   return (
-    <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 bg-neutral-950 p-6 text-center text-neutral-100">
-      <div className="grid size-12 place-items-center rounded-full bg-white/10">{icon}</div>
+    <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 bg-term-screen p-6 text-center text-term-text">
+      <div className="grid size-12 place-items-center rounded-full border border-term-border bg-term-raised text-term-muted">
+        {icon}
+      </div>
       <p className="max-w-sm text-sm font-medium">{title}</p>
       {children}
     </div>
@@ -90,7 +92,8 @@ export function StreamPlayer({
         responsive
         autoplay={autoplay}
         startTime={startTime && startTime > 5 ? Math.floor(startTime) : undefined}
-        primaryColor="#6366f1"
+        // El reproductor siempre es oscuro: usa el acento de la paleta oscura.
+        primaryColor="#b8f34a"
         onTimeUpdate={() => onTimeUpdate?.(currentTime())}
         onPause={() => onPause?.(currentTime())}
         onEnded={() => onEnded?.(currentTime())}
@@ -108,5 +111,6 @@ export function StreamPlayer({
     );
   }
 
-  return <div className={cn("overflow-hidden bg-neutral-950", className)}>{content}</div>;
+  // Pantalla oscura en los dos temas (clase `dark`), como en la portada.
+  return <div className={cn("dark overflow-hidden bg-term-screen text-term-text", className)}>{content}</div>;
 }

@@ -64,11 +64,12 @@ function CouponsTable() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Cupones"
+        command="ls cupones/"
         description="Códigos de descuento que los alumnos aplican en el carrito."
         actions={
           <Button asChild>
             <Link href="/admin/cupones/nuevo">
-              <Plus /> Nuevo cupón
+              <Plus /> nuevo cupón
             </Link>
           </Button>
         }
@@ -139,17 +140,17 @@ function CouponsTable() {
                 return (
                   <TableRow key={coupon.id} className="cursor-pointer" onClick={() => router.push(`/admin/cupones/${coupon.id}`)}>
                     <TableCell className="font-mono font-semibold">{coupon.code}</TableCell>
-                    <TableCell className="tabular-nums">
+                    <TableCell className="font-term text-[13px] tabular-nums">
                       {coupon.type === "percent" ? `${coupon.value} %` : money(coupon.value, currency)}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {coupon.appliesToAll ? "Todos los cursos" : `${coupon.coursesCount} ${coupon.coursesCount === 1 ? "curso" : "cursos"}`}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="text-right font-term text-[13px] tabular-nums">
                       {coupon.redemptionsCount}
                       <span className="text-muted-foreground"> / {coupon.maxRedemptions ?? "∞"}</span>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{coupon.expiresAt ? formatDateTime(coupon.expiresAt) : "Nunca"}</TableCell>
+                    <TableCell className="font-term text-[13px] text-muted-foreground">{coupon.expiresAt ? formatDateTime(coupon.expiresAt) : "Nunca"}</TableCell>
                     <TableCell>
                       {!coupon.active ? (
                         <StatusPill>Inactivo</StatusPill>
@@ -172,7 +173,7 @@ function CouponsTable() {
                           destructive
                           title={`¿Borrar el cupón ${coupon.code}?`}
                           description="Las órdenes que ya lo usaron conservan su descuento."
-                          confirmLabel="Borrar"
+                          confirmLabel="borrar"
                           onConfirm={() => remove(coupon.id)}
                           trigger={
                             <Button variant="ghost" size="icon-sm" aria-label={`Borrar ${coupon.code}`}>

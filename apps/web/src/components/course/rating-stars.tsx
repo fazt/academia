@@ -21,12 +21,12 @@ export function RatingStars({ value, className, size = "sm" }: { value: number; 
 }
 
 export function RatingSummary({ avg, count }: { avg: number; count: number }) {
-  if (count === 0) return <span className="text-xs text-muted-foreground">Sin valoraciones aún</span>;
+  if (count === 0) return <span className="font-term text-xs text-term-muted">sin valoraciones aún</span>;
   return (
-    <span className="inline-flex items-center gap-1.5 text-sm">
-      <span className="font-semibold text-amber-700 dark:text-star">{avg.toFixed(1)}</span>
+    <span className="inline-flex items-center gap-1.5 font-term text-[13px]">
+      <span className="font-bold text-term-num">{avg.toFixed(1)}</span>
       <RatingStars value={avg} />
-      <span className="text-xs text-muted-foreground">({count})</span>
+      <span className="text-term-muted">({count})</span>
     </span>
   );
 }

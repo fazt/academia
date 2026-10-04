@@ -120,11 +120,11 @@ export function SocialSignIn({ enabled, redirectTo }: { enabled: EnabledProvider
             onClick={() => start(id)}
           >
             {pending === id ? <Spinner /> : <Icon className="size-4" />}
-            Continuar con {name}
+            continuar con {name}
           </Button>
         ))}
       </div>
-      <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">o con tu email</FieldSeparator>
+      <FieldSeparator className="font-term text-xs *:data-[slot=field-separator-content]:bg-term-surface">o con tu email</FieldSeparator>
     </>
   );
 }

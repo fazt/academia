@@ -4,12 +4,14 @@ import { Award, Clock, Download, Infinity as InfinityIcon, MessagesSquare, PlayC
 import Link from "next/link";
 import { useCart } from "@/components/cart/cart-provider";
 import { CourseCover } from "@/components/course/course-cover";
+import { TermPanel } from "@/components/layout/term";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Spinner } from "@/components/ui/spinner";
 import { useCheckout } from "@/hooks/use-checkout";
 import { useLibrary } from "@/hooks/use-library";
 import { formatDuration, formatPrice } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 interface PurchaseCardProps {
   course: {
@@ -42,14 +44,14 @@ export function PurchaseCard({ course, resourcesCount, onPreview, hasPreview }: 
     actions = (
       <Button size="lg" className="h-11 w-full" asChild>
         <Link href={`/aprender/${course.slug}`}>
-          <PlayCircle /> Ir al curso
+          <PlayCircle /> ir al curso
         </Link>
       </Button>
     );
   } else if (free) {
     actions = (
       <Button size="lg" className="h-11 w-full" disabled={pending} onClick={() => checkout({ courseId: course.id })}>
-        {pending && <Spinner />} Inscribirme gratis
+        {pending && <Spinner />} inscribirme gratis
       </Button>
     );
   } else {
@@ -58,12 +60,12 @@ export function PurchaseCard({ course, resourcesCount, onPreview, hasPreview }: 
         {inCart ? (
           <Button size="lg" className="h-11 w-full" asChild>
             <Link href="/carrito">
-              <ShoppingCart /> Ir al carrito
+              <ShoppingCart /> ir al carrito
             </Link>
           </Button>
         ) : (
           <Button size="lg" className="h-11 w-full" onClick={() => cart.add(course.id)}>
-            <ShoppingCart /> Añadir al carrito
+            <ShoppingCart /> añadir al carrito
           </Button>
         )}
         <Button
@@ -73,40 +75,59 @@ export function PurchaseCard({ course, resourcesCount, onPreview, hasPreview }: 
           disabled={pending}
           onClick={() => checkout({ courseId: course.id })}
         >
-          {pending && <Spinner />} Comprar ahora
+          {pending && <Spinner />} comprar ahora
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-xl shadow-primary/5">
+    <TermPanel
+      title={
+        <>
+          {course.slug}
+          <span className="text-term-accent">/</span>
+        </>
+      }
+      aside={hasPreview ? <span className="shrink-0">vista previa gratis</span> : undefined}
+      className="shadow-[0_40px_80px_-40px_rgba(0,0,0,0.25)] dark:shadow-[0_40px_80px_-40px_rgba(0,0,0,0.8)]"
+    >
       <button
         type="button"
         onClick={onPreview}
         disabled={!hasPreview}
-        className="group relative block w-full disabled:cursor-default"
+        className="group relative block w-full border-b border-term-border focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none focus-visible:ring-inset disabled:cursor-default"
         aria-label="Ver vista previa del curso"
       >
-        <CourseCover title={course.title} src={course.coverImageUrl} />
+        <CourseCover title={course.title} src={course.coverImageUrl} className={cn(hasPreview && "[&>span]:hidden")} />
         {hasPreview && (
-          <span className="absolute inset-0 grid place-items-center bg-black/30 opacity-90 transition-opacity group-hover:bg-black/40">
-            <span className="flex flex-col items-center gap-2 text-sm font-semibold text-white">
-              <PlayCircle className="size-12" strokeWidth={1.5} />
-              Vista previa del curso
+          // Velo sobre la portada: oscuro en los dos temas, como la pantalla del reproductor.
+          <span className="dark absolute inset-0 grid place-items-center bg-black/35 transition-colors group-hover:bg-black/50">
+            <span className="flex flex-col items-center gap-2 font-term text-[13px] font-bold text-term-text">
+              <span className="grid size-[60px] place-items-center rounded-full bg-term-text/10">
+                <PlayCircle className="size-8" strokeWidth={1.5} />
+              </span>
+              ver vista previa
             </span>
           </span>
         )}
       </button>
       <div className="space-y-4 p-5">
-        <p className="font-heading text-3xl font-bold">{owned ? "Ya es tuyo" : formatPrice(course.priceCents, course.currency)}</p>
+        <p
+          className={cn(
+            "font-term text-[34px] leading-none font-extrabold tracking-[-0.02em]",
+            (owned || free) && "text-term-accent",
+          )}
+        >
+          {owned ? "ya es tuyo" : free ? "gratis" : formatPrice(course.priceCents, course.currency)}
+        </p>
         {actions}
         {!owned && !free && (
-          <p className="text-center text-xs text-muted-foreground">Pago seguro con Stripe · Acceso inmediato</p>
+          <p className="text-center font-term text-xs text-term-muted">pago seguro con Stripe · acceso inmediato</p>
         )}
-        <div>
-          <p className="mb-2 text-sm font-semibold">Este curso incluye:</p>
-          <ul className="space-y-2 text-sm text-muted-foreground">
+        <div className="border-t border-term-border pt-4">
+          <p className="mb-2.5 text-sm font-semibold">Este curso incluye:</p>
+          <ul className="space-y-2 text-sm text-term-muted [&_svg]:text-term-accent">
             <li className="flex items-center gap-2">
               <Clock className="size-4" /> {formatDuration(course.durationSec)} de video bajo demanda
             </li>
@@ -130,6 +151,6 @@ export function PurchaseCard({ course, resourcesCount, onPreview, hasPreview }: 
           </ul>
         </div>
       </div>
-    </div>
+    </TermPanel>
   );
 }

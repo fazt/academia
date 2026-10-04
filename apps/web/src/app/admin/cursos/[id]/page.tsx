@@ -21,6 +21,9 @@ import { formatDuration } from "@/lib/format";
 const TABS = ["informacion", "curriculo", "publicacion"] as const;
 type Tab = (typeof TABS)[number];
 
+// Pestañas como la navegación de la portada: monoespaciada y subrayado del acento en la activa.
+const tabClass = "px-3 after:bg-term-accent data-active:text-term-accent dark:data-active:text-term-accent";
+
 function CourseEditor() {
   const { id } = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -49,7 +52,7 @@ function CourseEditor() {
         </EmptyHeader>
         <EmptyContent>
           <Button asChild variant="outline">
-            <Link href="/admin/cursos">Volver a cursos</Link>
+            <Link href="/admin/cursos">volver a cursos</Link>
           </Button>
         </EmptyContent>
       </Empty>
@@ -64,6 +67,7 @@ function CourseEditor() {
       <AdminPageHeader
         backHref="/admin/cursos"
         backLabel="Cursos"
+        command={`vim cursos/${data.slug}`}
         title={
           <span className="flex flex-wrap items-center gap-3">
             <span className="min-w-0 break-words">{data.title}</span>
@@ -75,7 +79,7 @@ function CourseEditor() {
           data.status === "published" && (
             <Button variant="outline" asChild>
               <Link href={`/cursos/${data.slug}`} target="_blank">
-                <ExternalLink /> Ver en la web
+                <ExternalLink /> ver en la web
               </Link>
             </Button>
           )
@@ -92,10 +96,16 @@ function CourseEditor() {
             router.replace(`${pathname}?${next.toString()}`, { scroll: false });
           }}
         >
-          <TabsList>
-            <TabsTrigger value="informacion">Información</TabsTrigger>
-            <TabsTrigger value="curriculo">Currículo</TabsTrigger>
-            <TabsTrigger value="publicacion">Publicación</TabsTrigger>
+          <TabsList variant="line" className="font-term">
+            <TabsTrigger value="informacion" className={tabClass}>
+              información
+            </TabsTrigger>
+            <TabsTrigger value="curriculo" className={tabClass}>
+              currículo
+            </TabsTrigger>
+            <TabsTrigger value="publicacion" className={tabClass}>
+              publicación
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="informacion" className="mt-4">
             <CourseForm

@@ -1,14 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, ChevronLeft, ChevronRight, Lock, SkipForward, X } from "lucide-react";
+import { Check, Lock, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { api, call } from "@/lib/api";
-import { formatDuration } from "@/lib/format";
+import { formatClock } from "@/lib/format";
 import { CurriculumSidebar } from "./curriculum-sidebar";
 import { LearnHeader } from "./learn-header";
 import { LearnEmptyCourse, LearnErrorState, LearnSkeleton } from "./learn-states";
@@ -41,19 +41,20 @@ function NextUpBanner({
   }, [secondsLeft, href, router]);
 
   return (
-    <div className="flex flex-col gap-3 border-b bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:px-6" role="status">
+    <div
+      className="flex flex-col gap-3 border-b border-term-border bg-[color-mix(in_oklch,var(--term-accent)_8%,var(--term-bg))] px-5 py-3 sm:flex-row sm:items-center sm:px-8"
+      role="status"
+    >
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-medium tracking-wide text-primary uppercase">Siguiente clase en {secondsLeft} s</p>
+        <p className="font-term text-xs text-term-accent">siguiente clase en {secondsLeft} s</p>
         <p className="truncate font-medium">{title}</p>
       </div>
       <div className="flex gap-2">
         <Button variant="ghost" size="sm" onClick={onCancel}>
-          <X /> Cancelar
+          <X /> cancelar
         </Button>
         <Button size="sm" asChild>
-          <Link href={href}>
-            <SkipForward /> Ver ahora
-          </Link>
+          <Link href={href}>ver ahora →</Link>
         </Button>
       </div>
     </div>
@@ -98,7 +99,8 @@ export function LearnView({ slug, chapterId }: { slug: string; chapterId: string
   if (!chapter) return <LearnSkeleton />;
 
   const progress = data.progress[chapter.id];
-  const section = data.sections.find((s) => s.id === chapter.sectionId);
+  const sectionIndex = data.sections.findIndex((s) => s.id === chapter.sectionId);
+  const section = data.sections[sectionIndex];
   const showNextUp = endedChapterId === chapter.id && !!next;
 
   return (
@@ -106,7 +108,8 @@ export function LearnView({ slug, chapterId }: { slug: string; chapterId: string
       <LearnHeader data={data} onOpenCurriculum={() => setCurriculumOpen(true)} />
       <div className="flex min-h-0 flex-1">
         <main className="min-w-0 flex-1">
-          <div className="bg-neutral-950">
+          {/* La pantalla del video es oscura en los dos temas. */}
+          <div className="dark bg-term-screen">
             <div className="mx-auto max-w-6xl">
               {chapter.hasVideo ? (
                 <LessonPlayer
@@ -119,8 +122,8 @@ export function LearnView({ slug, chapterId }: { slug: string; chapterId: string
                   onEnded={() => setEndedChapterId(chapter.id)}
                 />
               ) : (
-                <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 p-6 text-center text-neutral-100">
-                  <div className="grid size-12 place-items-center rounded-full bg-white/10">
+                <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 p-6 text-center text-term-text">
+                  <div className="grid size-12 place-items-center rounded-full border border-term-border bg-term-raised text-term-muted">
                     <Lock className="size-5" />
                   </div>
                   <p className="max-w-sm text-sm font-medium">El video de esta clase todavía no está disponible.</p>
@@ -138,20 +141,23 @@ export function LearnView({ slug, chapterId }: { slug: string; chapterId: string
             />
           )}
 
-          <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+          <div className="mx-auto max-w-6xl space-y-8 px-5 py-8 sm:px-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0 space-y-1">
+              <div className="flex min-w-0 flex-col gap-2">
                 {section && (
-                  <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{section.title}</p>
+                  <p className="font-term text-[13px] text-term-muted">
+                    <span className="text-term-accent">$</span> sección {sectionIndex + 1} · {section.title}
+                  </p>
                 )}
-                <h1 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">
+                <h1 className="font-term text-[clamp(1.375rem,2.4vw,1.875rem)] leading-tight font-extrabold tracking-[-0.02em] text-balance">
                   {index + 1}. {chapter.title}
                 </h1>
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {chapter.hasVideo && <span>{formatDuration(chapter.durationSec)}</span>}
+                <p className="flex items-center gap-2 font-term text-[13px] text-term-muted">
+                  {chapter.hasVideo && <span>{formatClock(chapter.durationSec)}</span>}
+                  {chapter.hasVideo && progress?.completed && <span aria-hidden>·</span>}
                   {progress?.completed && (
-                    <span className="inline-flex items-center gap-1 font-medium text-primary">
-                      <CheckCircle2 className="size-4" /> Completada
+                    <span className="inline-flex items-center gap-1 text-term-ok">
+                      completada <Check className="size-3.5" strokeWidth={3} aria-hidden />
                     </span>
                   )}
                 </p>
@@ -159,24 +165,20 @@ export function LearnView({ slug, chapterId }: { slug: string; chapterId: string
               <div className="flex shrink-0 gap-2">
                 {prev ? (
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/aprender/${slug}/${prev.id}`}>
-                      <ChevronLeft /> Anterior
-                    </Link>
+                    <Link href={`/aprender/${slug}/${prev.id}`}>← anterior</Link>
                   </Button>
                 ) : (
                   <Button variant="outline" size="sm" disabled>
-                    <ChevronLeft /> Anterior
+                    ← anterior
                   </Button>
                 )}
                 {next ? (
                   <Button size="sm" asChild>
-                    <Link href={`/aprender/${slug}/${next.id}`}>
-                      Siguiente <ChevronRight />
-                    </Link>
+                    <Link href={`/aprender/${slug}/${next.id}`}>siguiente →</Link>
                   </Button>
                 ) : (
                   <Button size="sm" disabled>
-                    Siguiente <ChevronRight />
+                    siguiente →
                   </Button>
                 )}
               </div>
@@ -186,7 +188,7 @@ export function LearnView({ slug, chapterId }: { slug: string; chapterId: string
           </div>
         </main>
 
-        <aside className="sticky top-14 hidden h-[calc(100svh-3.5rem)] w-[22rem] shrink-0 border-l bg-card lg:flex xl:w-96">
+        <aside className="sticky top-14 hidden h-[calc(100svh-3.5rem)] w-[22rem] shrink-0 border-l border-term-border bg-term-surface lg:flex xl:w-96">
           <CurriculumSidebar slug={slug} data={data} currentChapterId={chapter.id} className="w-full" />
         </aside>
       </div>

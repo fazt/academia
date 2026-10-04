@@ -23,20 +23,20 @@ export function RevenueChart({ series, currency }: { series: Point[]; currency: 
     <div className="space-y-3">
       <div className="flex min-h-10 items-baseline justify-between gap-2">
         {active ? (
-          <p className="text-sm">
-            <span className="font-medium">{dayLabel.format(new Date(`${active.day}T12:00:00`))}</span>
-            <span className="text-muted-foreground"> · </span>
-            <span className="font-heading text-lg font-bold">{money(active.revenueCents, currency)}</span>
-            <span className="text-muted-foreground"> · {active.sales} {active.sales === 1 ? "venta" : "ventas"}</span>
+          <p className="font-term text-[13px]">
+            <span className="text-term-muted">{dayLabel.format(new Date(`${active.day}T12:00:00`))}</span>
+            <span className="text-term-muted"> · </span>
+            <span className="text-lg font-extrabold text-term-accent">{money(active.revenueCents, currency)}</span>
+            <span className="text-term-muted"> · {active.sales} {active.sales === 1 ? "venta" : "ventas"}</span>
           </p>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-term-muted">
             Pasa el cursor sobre una barra para ver el detalle del día.
           </p>
         )}
       </div>
       <div
-        className="relative flex h-48 items-end gap-[3px] border-b border-dashed"
+        className="relative flex h-48 items-end gap-[3px] border-b border-dashed border-term-border-strong"
         role="img"
         aria-label={`Ingresos de los últimos 30 días: ${money(total, currency)}`}
         onMouseLeave={() => setHovered(null)}
@@ -44,7 +44,7 @@ export function RevenueChart({ series, currency }: { series: Point[]; currency: 
         {[0.25, 0.5, 0.75].map((ratio) => (
           <div
             key={ratio}
-            className="pointer-events-none absolute inset-x-0 border-t border-dashed border-border/60"
+            className="pointer-events-none absolute inset-x-0 border-t border-dashed border-term-border"
             style={{ bottom: `${ratio * 100}%` }}
             aria-hidden
           />
@@ -64,7 +64,7 @@ export function RevenueChart({ series, currency }: { series: Point[]; currency: 
               <span
                 className={cn(
                   "w-full rounded-t-[3px] bg-chart-1/70 transition-colors group-hover:bg-chart-1 group-focus-visible:bg-chart-1",
-                  point.revenueCents === 0 && "h-[2px]! bg-muted-foreground/20",
+                  point.revenueCents === 0 && "h-[2px]! bg-term-border-strong",
                   hovered === index && "bg-chart-1",
                 )}
                 style={{ height: `${height}%` }}
@@ -73,9 +73,9 @@ export function RevenueChart({ series, currency }: { series: Point[]; currency: 
           );
         })}
       </div>
-      <div className="flex justify-between text-xs text-muted-foreground">
+      <div className="flex justify-between font-term text-xs text-term-muted">
         <span>{series[0] ? dayLabel.format(new Date(`${series[0].day}T12:00:00`)) : ""}</span>
-        <span>Hoy</span>
+        <span>hoy</span>
       </div>
     </div>
   );

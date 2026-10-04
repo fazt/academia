@@ -50,11 +50,11 @@ export function CoverUpload({
 
   return (
     <div className="space-y-3">
-      <div className="relative max-w-sm overflow-hidden rounded-lg border">
+      <div className="relative max-w-sm overflow-hidden rounded-[10px] border border-term-border">
         <CourseCover title={title || "Nuevo curso"} src={value} />
         {progress !== null && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/80 p-6 backdrop-blur-sm">
-            <p className="text-sm font-medium">Subiendo… {progress} %</p>
+            <p className="font-term text-sm font-medium">subiendo… {progress} %</p>
             <Progress value={progress} className="w-full" />
           </div>
         )}
@@ -71,11 +71,11 @@ export function CoverUpload({
           }}
         />
         <Button type="button" variant="outline" size="sm" disabled={progress !== null} onClick={() => inputRef.current?.click()}>
-          <ImageUp /> {value ? "Cambiar portada" : "Subir portada"}
+          <ImageUp /> {value ? "cambiar portada" : "subir portada"}
         </Button>
         {value && (
           <Button type="button" variant="ghost" size="sm" disabled={progress !== null} onClick={() => onChange(null)}>
-            <Trash2 /> Quitar
+            <Trash2 /> quitar
           </Button>
         )}
       </div>

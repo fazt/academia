@@ -228,13 +228,13 @@ export function CurriculumBuilder({ course }: { course: AdminCourse }) {
   return (
     <div className="space-y-4">
       {!course.streamConfigured && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
-          <CloudOff className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div className="flex items-start gap-3 rounded-[14px] border border-term-num/30 bg-term-num/10 p-4 text-sm">
+          <CloudOff className="mt-0.5 size-4 shrink-0 text-term-num" />
           <div>
             <p className="font-medium">Cloudflare Stream no está configurado</p>
             <p className="text-muted-foreground">
               Puedes organizar el currículo, pero para subir videos define CLOUDFLARE_ACCOUNT_ID y
-              CLOUDFLARE_STREAM_API_TOKEN en la API y ejecuta <code className="font-mono">pnpm stream:setup</code>.
+              CLOUDFLARE_STREAM_API_TOKEN en la API y ejecuta <code className="font-term text-term-text">pnpm stream:setup</code>.
             </p>
           </div>
         </div>
@@ -243,8 +243,8 @@ export function CurriculumBuilder({ course }: { course: AdminCourse }) {
       <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
         <p>Arrastra con el asa para reordenar. Los capítulos se pueden mover entre secciones.</p>
         {saving && (
-          <span className="inline-flex shrink-0 items-center gap-1.5">
-            <Spinner className="size-3.5" /> Guardando orden…
+          <span className="inline-flex shrink-0 items-center gap-1.5 font-term text-xs">
+            <Spinner className="size-3.5" /> guardando orden…
           </span>
         )}
       </div>
@@ -304,12 +304,12 @@ export function CurriculumBuilder({ course }: { course: AdminCourse }) {
           </SortableContext>
           <DragOverlay>
             {activeSection ? (
-              <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 font-medium shadow-xl">
+              <div className="flex items-center gap-2 rounded-[14px] border border-term-border-strong bg-term-raised px-4 py-3 font-term font-bold shadow-xl">
                 <GripVertical className="size-4 text-muted-foreground" />
                 {activeSection.title}
               </div>
             ) : activeChapter ? (
-              <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm shadow-xl">
+              <div className="flex items-center gap-2 rounded-[10px] border border-term-border-strong bg-term-raised px-3 py-2.5 text-sm shadow-xl">
                 <GripVertical className="size-4 text-muted-foreground" />
                 {activeChapter.title}
               </div>
@@ -318,7 +318,7 @@ export function CurriculumBuilder({ course }: { course: AdminCourse }) {
         </DndContext>
       )}
 
-      <form onSubmit={addSection} className="flex flex-col gap-2 rounded-xl border border-dashed p-4 sm:flex-row">
+      <form onSubmit={addSection} className="flex flex-col gap-2 rounded-[14px] border border-dashed border-term-border-strong p-4 sm:flex-row">
         <Input
           value={newSection}
           onChange={(event) => setNewSection(event.target.value)}
@@ -327,7 +327,7 @@ export function CurriculumBuilder({ course }: { course: AdminCourse }) {
           aria-label="Título de la nueva sección"
         />
         <Button type="submit" disabled={!newSection.trim() || addingSection} className="shrink-0">
-          {addingSection ? <Spinner /> : <Plus />} Añadir sección
+          {addingSection ? <Spinner /> : <Plus />} añadir sección
         </Button>
       </form>
 
@@ -398,20 +398,20 @@ function SortableSection({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("rounded-xl border bg-card", isDragging && "opacity-40")}
+      className={cn("overflow-hidden rounded-[14px] border border-term-border bg-term-surface", isDragging && "opacity-40")}
     >
-      <div className="flex items-center gap-2 border-b px-3 py-2.5">
+      <div className="flex items-center gap-2 border-b border-term-border bg-term-raised px-3 py-2.5">
         <button
           type="button"
           ref={setActivatorNodeRef}
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none active:cursor-grabbing"
+          className="cursor-grab touch-none rounded p-1 text-term-muted hover:bg-term-surface hover:text-term-text focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none active:cursor-grabbing"
           aria-label={`Mover sección ${section.title}`}
         >
           <GripVertical className="size-4" />
         </button>
-        <span className="text-xs font-medium text-muted-foreground tabular-nums">Sección {index + 1}</span>
+        <span className="font-term text-xs text-term-muted tabular-nums">sección {index + 1}</span>
         {editing ? (
           <form
             className="flex min-w-0 flex-1 items-center gap-1"
@@ -452,8 +452,8 @@ function SortableSection({
           </form>
         ) : (
           <>
-            <h3 className="min-w-0 flex-1 truncate font-heading font-semibold">{section.title}</h3>
-            <span className="hidden text-xs text-muted-foreground sm:inline">
+            <h3 className="min-w-0 flex-1 truncate font-semibold">{section.title}</h3>
+            <span className="hidden font-term text-xs text-term-muted sm:inline">
               {chapters.length} {chapters.length === 1 ? "capítulo" : "capítulos"} · {formatDuration(duration)}
             </span>
             <Button size="icon-sm" variant="ghost" onClick={() => setEditing(true)} aria-label="Renombrar sección">
@@ -467,7 +467,7 @@ function SortableSection({
                   ? `Se borrarán también sus ${chapters.length} capítulos, con sus videos y recursos.`
                   : "La sección está vacía."
               }
-              confirmLabel="Borrar sección"
+              confirmLabel="borrar sección"
               onConfirm={remove}
               trigger={
                 <Button size="icon-sm" variant="ghost" aria-label="Borrar sección">
@@ -482,10 +482,10 @@ function SortableSection({
       <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
         <ul
           ref={setDropRef}
-          className={cn("min-h-12 space-y-2 p-3 transition-colors", isOver && "bg-primary/5")}
+          className={cn("min-h-12 space-y-2 p-3 transition-colors", isOver && "bg-term-accent/5")}
         >
           {chapters.length === 0 && (
-            <li className="rounded-lg border border-dashed px-3 py-3 text-center text-sm text-muted-foreground">
+            <li className="rounded-[10px] border border-dashed border-term-border-strong px-3 py-3 text-center text-sm text-term-muted">
               Sin capítulos. Añade uno o arrastra uno aquí.
             </li>
           )}
@@ -504,7 +504,7 @@ function SortableSection({
 
       <div className="px-3 pb-3">
         <Button size="sm" variant="ghost" onClick={onAddChapter}>
-          <Plus /> Añadir capítulo
+          <Plus /> añadir capítulo
         </Button>
       </div>
     </div>
@@ -545,7 +545,7 @@ function SortableChapter({
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("rounded-lg border bg-background", isDragging && "opacity-40")}
+      className={cn("rounded-[10px] border border-term-border bg-term-bg", isDragging && "opacity-40")}
     >
       <div className="flex flex-col gap-2 p-2.5 sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -554,16 +554,16 @@ function SortableChapter({
             ref={setActivatorNodeRef}
             {...attributes}
             {...listeners}
-            className="cursor-grab touch-none rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none active:cursor-grabbing"
+            className="cursor-grab touch-none rounded p-1 text-term-muted hover:bg-term-surface hover:text-term-text focus-visible:ring-2 focus-visible:ring-term-accent focus-visible:outline-none active:cursor-grabbing"
             aria-label={`Mover capítulo ${chapter.title}`}
           >
             <GripVertical className="size-4" />
           </button>
-          <span className="w-5 shrink-0 text-xs text-muted-foreground tabular-nums">{number}.</span>
+          <span className="w-5 shrink-0 font-term text-xs text-term-muted tabular-nums">{number}.</span>
           <span className="min-w-0 truncate text-sm font-medium">{chapter.title}</span>
           {chapter.isFreePreview && (
             <StatusPill tone="primary" dot={false}>
-              <Eye className="size-3" /> Preview
+              <Eye className="size-3" /> preview
             </StatusPill>
           )}
         </div>
@@ -586,7 +586,7 @@ function SortableChapter({
             destructive
             title="¿Borrar este capítulo?"
             description={`Se borrará «${chapter.title}» con su video, recursos, progreso y comentarios.`}
-            confirmLabel="Borrar capítulo"
+            confirmLabel="borrar capítulo"
             onConfirm={remove}
             trigger={
               <Button size="icon-xs" variant="ghost" aria-label="Borrar capítulo">
@@ -597,8 +597,8 @@ function SortableChapter({
         </div>
       </div>
       {showResources && (
-        <div className="border-t bg-muted/30 px-3 py-3 sm:pl-12">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Recursos descargables</p>
+        <div className="border-t border-term-border bg-term-surface px-3 py-3 sm:pl-12">
+          <p className="mb-2 font-term text-xs text-term-muted">recursos/</p>
           <ChapterResources courseId={courseId} chapter={chapter} />
         </div>
       )}

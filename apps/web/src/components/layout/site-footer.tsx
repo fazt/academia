@@ -1,43 +1,26 @@
 import Link from "next/link";
-import { Logo } from "@/components/brand";
 
+const LINKS = [
+  { href: "/cursos", label: "cursos/" },
+  { href: "/mis-certificados", label: "certificados" },
+  { href: "/terminos", label: "términos" },
+  { href: "/privacidad", label: "privacidad" },
+  { href: "/reembolsos", label: "reembolsos" },
+];
+
+/** Pie de todo el sitio, en la dirección "Terminal" de la portada. */
 export function SiteFooter() {
   return (
-    <footer className="mt-auto border-t bg-muted/30">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-        <div className="space-y-3">
-          <Logo />
-          <p className="max-w-xs text-sm text-muted-foreground">
-            Cursos en video para aprender a tu ritmo, con certificados y una comunidad que responde tus dudas.
-          </p>
-        </div>
-        <div>
-          <h3 className="mb-3 text-sm font-semibold">Aprender</h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link className="hover:text-foreground" href="/cursos">Explorar cursos</Link></li>
-            <li><Link className="hover:text-foreground" href="/cursos?price=free">Cursos gratis</Link></li>
-            <li><Link className="hover:text-foreground" href="/mis-cursos">Mis cursos</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="mb-3 text-sm font-semibold">Cuenta</h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link className="hover:text-foreground" href="/registro">Crear cuenta</Link></li>
-            <li><Link className="hover:text-foreground" href="/login">Iniciar sesión</Link></li>
-            <li><Link className="hover:text-foreground" href="/mis-certificados">Certificados</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h3 className="mb-3 text-sm font-semibold">Legal</h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link className="hover:text-foreground" href="/terminos">Términos y condiciones</Link></li>
-            <li><Link className="hover:text-foreground" href="/privacidad">Política de privacidad</Link></li>
-            <li><Link className="hover:text-foreground" href="/reembolsos">Política de reembolsos</Link></li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Academia. Todos los derechos reservados.
+    <footer className="mt-auto border-t border-term-border">
+      <div className="mx-auto flex max-w-[1200px] flex-wrap justify-between gap-x-8 gap-y-3 px-5 py-8 font-term text-[13px] text-term-muted sm:px-10">
+        <span>© {new Date().getFullYear()} academia</span>
+        <nav aria-label="Pie de página" className="flex flex-wrap gap-x-6 gap-y-2">
+          {LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className="transition-colors hover:text-term-text">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
       </div>
     </footer>
   );

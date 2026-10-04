@@ -45,7 +45,7 @@ function OrdersTable() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader title="Órdenes" description="Compras de los alumnos, pagos y reembolsos." />
+      <AdminPageHeader title="Órdenes" command="ls ordenes/ --sort=fecha" description="Compras de los alumnos, pagos y reembolsos." />
       <TableCard
         toolbar={
           <TableToolbar table={table} placeholder="Buscar por cliente, email o nº de orden…">
@@ -96,7 +96,7 @@ function OrdersTable() {
             ) : (
               orders.data.items.map((order) => (
                 <TableRow key={order.id} className="cursor-pointer" onClick={() => router.push(`/admin/ordenes/${order.id}`)}>
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="font-term text-[13px] text-term-num">
                     <Link href={`/admin/ordenes/${order.id}`} className="hover:text-primary" onClick={(e) => e.stopPropagation()}>
                       #{order.id.slice(0, 8).toUpperCase()}
                     </Link>
@@ -110,12 +110,12 @@ function OrdersTable() {
                   <TableCell>
                     <OrderStatusBadge status={order.status} />
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">{order.itemsCount}</TableCell>
-                  <TableCell className="text-right tabular-nums">
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">{order.itemsCount}</TableCell>
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">
                     {money(order.amountPaidCents ?? order.totalCents, order.currency)}
                     {order.couponCode && <p className="font-mono text-xs text-muted-foreground">{order.couponCode}</p>}
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDateTime(order.createdAt)}</TableCell>
+                  <TableCell className="font-term text-[13px] text-muted-foreground">{formatDateTime(order.createdAt)}</TableCell>
                   <TableCell>
                     <ChevronRight className="size-4 text-muted-foreground" />
                   </TableCell>

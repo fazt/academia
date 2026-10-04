@@ -10,13 +10,14 @@ import { cn } from "@/lib/utils";
 
 type Tone = "neutral" | "success" | "warning" | "danger" | "info" | "primary";
 
+// Colores de la paleta Terminal: ok, número (pendiente), clave (info) y acento.
 const TONES: Record<Tone, string> = {
-  neutral: "bg-muted text-muted-foreground ring-border",
-  success: "bg-emerald-500/10 text-emerald-700 ring-emerald-500/25 dark:text-emerald-400",
-  warning: "bg-amber-500/10 text-amber-700 ring-amber-500/25 dark:text-amber-400",
-  danger: "bg-red-500/10 text-red-700 ring-red-500/25 dark:text-red-400",
-  info: "bg-sky-500/10 text-sky-700 ring-sky-500/25 dark:text-sky-400",
-  primary: "bg-primary/10 text-primary ring-primary/25",
+  neutral: "bg-term-raised text-term-muted ring-term-border",
+  success: "bg-term-ok/10 text-term-ok ring-term-ok/30",
+  warning: "bg-term-num/10 text-term-num ring-term-num/30",
+  danger: "bg-destructive/10 text-destructive ring-destructive/30",
+  info: "bg-term-key/10 text-term-key ring-term-key/30",
+  primary: "bg-term-accent/10 text-term-accent ring-term-accent/30",
 };
 
 export function StatusPill({
@@ -33,7 +34,7 @@ export function StatusPill({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset",
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-term text-[11px] font-medium whitespace-nowrap lowercase ring-1 ring-inset",
         TONES[tone],
         className,
       )}

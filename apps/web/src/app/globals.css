@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-display);
+  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+  --font-heading: var(--font-jetbrains), ui-monospace, monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -24,18 +24,19 @@
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
   --color-star: var(--star);
-  /* Portada (dirección "Terminal"): siempre oscura, independiente del tema */
-  --color-term-bg: #0b0d0c;
-  --color-term-surface: #121513;
-  --color-term-raised: #161a17;
-  --color-term-border: #262b28;
-  --color-term-border-strong: #3a413d;
-  --color-term-text: #e8ede9;
-  --color-term-muted: #a3ada6;
-  --color-term-accent: #b8f34a;
-  --color-term-ok: #4ade80;
-  --color-term-key: #93c5fd;
-  --color-term-num: #fdba74;
+  /* Dirección visual "Terminal" (todo el sitio). Los valores cambian con el tema en :root/.dark */
+  --color-term-bg: var(--term-bg);
+  --color-term-surface: var(--term-surface);
+  --color-term-raised: var(--term-raised);
+  --color-term-border: var(--term-border);
+  --color-term-border-strong: var(--term-border-strong);
+  --color-term-text: var(--term-text);
+  --color-term-muted: var(--term-muted);
+  --color-term-accent: var(--term-accent);
+  --color-term-ok: var(--term-ok);
+  --color-term-key: var(--term-key);
+  --color-term-num: var(--term-num);
+  --color-term-screen: var(--term-screen);
   --font-term: var(--font-jetbrains), ui-monospace, monospace;
   --font-term-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
   --color-ring: var(--ring);
@@ -63,75 +64,85 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Claro: la misma dirección sobre papel. El verde lima no se lee sobre blanco,
+ * así que el acento baja a un oliva con contraste AA.
+ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.51 0.23 277);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.51 0.23 277 / 60%);
-  --chart-1: oklch(0.51 0.23 277);
-  --chart-2: oklch(0.7 0.15 162);
-  --chart-3: oklch(0.77 0.16 70);
-  --chart-4: oklch(0.65 0.2 15);
-  --chart-5: oklch(0.6 0.12 230);
-  --radius: 0.625rem;
-  --star: oklch(0.79 0.16 75);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.51 0.23 277);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --term-bg: #f6f7f3;
+  --term-surface: #ffffff;
+  --term-raised: #eef1ea;
+  --term-border: #dde2d9;
+  --term-border-strong: #c2c9bd;
+  --term-text: #111412;
+  --term-muted: #59625b;
+  --term-accent: #4d7c0f;
+  --term-ok: #15803d;
+  --term-key: #1d4ed8;
+  --term-num: #c2410c;
+  --term-screen: #e6eae2;
+
+  --accent: #e4e9df;
+  --destructive: #dc2626;
+  --chart-4: #be185d;
 }
 
+/* Oscuro (por defecto): exactamente la paleta de la portada. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.68 0.17 277);
-  --primary-foreground: oklch(0.145 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.68 0.17 277 / 60%);
-  --chart-1: oklch(0.68 0.17 277);
-  --chart-2: oklch(0.72 0.14 162);
-  --chart-3: oklch(0.8 0.15 75);
-  --chart-4: oklch(0.7 0.18 15);
-  --chart-5: oklch(0.7 0.11 230);
-  --star: oklch(0.82 0.15 80);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.68 0.17 277);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --term-bg: #0b0d0c;
+  --term-surface: #121513;
+  --term-raised: #161a17;
+  --term-border: #262b28;
+  --term-border-strong: #3a413d;
+  --term-text: #e8ede9;
+  --term-muted: #a3ada6;
+  --term-accent: #b8f34a;
+  --term-ok: #4ade80;
+  --term-key: #93c5fd;
+  --term-num: #fdba74;
+  --term-screen: #060807;
+
+  --accent: #1f2420;
+  --destructive: #f87171;
+  --chart-4: #f472b6;
+}
+
+/*
+ * Los tokens de shadcn salen de la paleta Terminal. Se declaran también en .dark para
+ * que un contenedor con la clase `dark` dentro de una página clara resuelva sus colores.
+ */
+:root,
+.dark {
+  --background: var(--term-bg);
+  --foreground: var(--term-text);
+  --card: var(--term-surface);
+  --card-foreground: var(--term-text);
+  --popover: var(--term-surface);
+  --popover-foreground: var(--term-text);
+  --primary: var(--term-accent);
+  --primary-foreground: var(--term-bg);
+  --secondary: var(--term-raised);
+  --secondary-foreground: var(--term-text);
+  --muted: var(--term-raised);
+  --muted-foreground: var(--term-muted);
+  --accent-foreground: var(--term-text);
+  --border: var(--term-border);
+  --input: var(--term-border-strong);
+  --ring: color-mix(in oklch, var(--term-accent) 60%, transparent);
+  --chart-1: var(--term-accent);
+  --chart-2: var(--term-key);
+  --chart-3: var(--term-num);
+  --chart-5: var(--term-muted);
+  --radius: 0.625rem;
+  --star: var(--term-num);
+  --sidebar: var(--term-surface);
+  --sidebar-foreground: var(--term-text);
+  --sidebar-primary: var(--term-accent);
+  --sidebar-primary-foreground: var(--term-bg);
+  --sidebar-accent: var(--term-raised);
+  --sidebar-accent-foreground: var(--term-text);
+  --sidebar-border: var(--term-border);
+  --sidebar-ring: var(--ring);
 }
 
 @layer base {
@@ -146,6 +157,13 @@
   }
   html {
     @apply font-sans;
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--term-accent) 35%, transparent);
   }
 }
 

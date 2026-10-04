@@ -29,9 +29,13 @@ export function ResetPasswordForm() {
 
   if (!token || linkError) {
     return (
-      <AuthCard title="Enlace no válido" description="El enlace para restablecer la contraseña no es válido o ha caducado.">
+      <AuthCard
+        file="reset-password.sh"
+        title="Enlace no válido"
+        description="El enlace para restablecer la contraseña no es válido o ha caducado."
+      >
         <Button asChild className="w-full">
-          <Link href="/forgot-password">Pedir un enlace nuevo</Link>
+          <Link href="/forgot-password">pedir un enlace nuevo</Link>
         </Button>
       </AuthCard>
     );
@@ -52,7 +56,11 @@ export function ResetPasswordForm() {
   };
 
   return (
-    <AuthCard title="Elige una nueva contraseña" description="Por seguridad, se cerrarán tus otras sesiones.">
+    <AuthCard
+      file="reset-password.sh"
+      title="Elige una nueva contraseña"
+      description="Por seguridad, se cerrarán tus otras sesiones."
+    >
       <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <FieldGroup>
           <TextField
@@ -70,7 +78,7 @@ export function ResetPasswordForm() {
             autoComplete="new-password"
           />
           <SubmitButton pending={form.formState.isSubmitting} className="w-full" size="lg">
-            Guardar contraseña
+            guardar contraseña
           </SubmitButton>
         </FieldGroup>
       </form>

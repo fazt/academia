@@ -52,11 +52,12 @@ function CategoriesTable() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Categorías"
+        command="ls categorias/"
         description="Agrupan los cursos en el catálogo."
         actions={
           <Button asChild>
             <Link href="/admin/categorias/nuevo">
-              <Plus /> Nueva categoría
+              <Plus /> nueva categoría
             </Link>
           </Button>
         }
@@ -108,8 +109,8 @@ function CategoriesTable() {
                     </Link>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">{category.slug}</TableCell>
-                  <TableCell className="text-right tabular-nums">{formatNumber(category.coursesCount)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(category.createdAt)}</TableCell>
+                  <TableCell className="text-right font-term text-[13px] tabular-nums">{formatNumber(category.coursesCount)}</TableCell>
+                  <TableCell className="font-term text-[13px] text-muted-foreground">{formatDate(category.createdAt)}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
                       <Button variant="ghost" size="icon-sm" asChild>
@@ -125,7 +126,7 @@ function CategoriesTable() {
                             ? `Sus ${category.coursesCount} cursos quedarán sin categoría.`
                             : "No tiene cursos asociados."
                         }
-                        confirmLabel="Borrar"
+                        confirmLabel="borrar"
                         onConfirm={() => remove(category.id)}
                         trigger={
                           <Button variant="ghost" size="icon-sm" aria-label={`Borrar ${category.name}`}>

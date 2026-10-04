@@ -71,6 +71,7 @@ function CommentsTable() {
     <div className="space-y-6">
       <AdminPageHeader
         title="Comentarios y preguntas"
+        command="ls comentarios/"
         description="Mensajes de los alumnos en los capítulos. Responde desde la página de la clase."
       />
       <TableCard
@@ -151,7 +152,7 @@ function CommentsTable() {
                     </TableCell>
                     <TableCell className="max-w-md whitespace-normal">
                       <p className="line-clamp-3 text-sm">{comment.body}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="mt-1 font-term text-xs text-muted-foreground">
                         {formatRelative(comment.createdAt)} · {comment.repliesCount}{" "}
                         {comment.repliesCount === 1 ? "respuesta" : "respuestas"}
                       </p>
